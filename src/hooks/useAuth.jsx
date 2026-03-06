@@ -34,9 +34,13 @@ export function AuthProvider({ children }) {
         } else {
           setProfile(null)
         }
-      } catch {
-        setUser(null)
-        setProfile(null)
+      } catch (err) {
+        if (err.message === 'timeout') {
+          // timeout — jangan logout, biarkan user tetap
+        } else {
+          setUser(null)
+          setProfile(null)
+        }
       } finally {
         setInitialLoading(false)
       }
