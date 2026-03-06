@@ -20,7 +20,7 @@ export function AuthProvider({ children }) {
       try {
         const { data } = await Promise.race([
           supabase.auth.getSession(),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 10000))
         ])
         const sessionUser = data?.session?.user ?? null
         setUser(sessionUser)
@@ -126,6 +126,16 @@ export function AuthProvider({ children }) {
     setProfile(null)
   }
 
+  const refreshProfile = async () => {
+    if (!user) return
+    const { data } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single()
+    setProfile(data ?? null)
+  }
+
   const value = useMemo(
     () => ({
       user,
@@ -135,6 +145,7 @@ export function AuthProvider({ children }) {
       signIn,
       signUp,
       signOut,
+      refreshProfile
     }),
     [user, profile, initialLoading, authLoading],
   )
