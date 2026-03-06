@@ -17,24 +17,31 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const load = async () => {
-      const { data } = await supabase.auth.getSession()
-      const sessionUser = data.session?.user ?? null
-      setUser(sessionUser)
-
-      if (sessionUser) {
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', sessionUser.id)
-          .single()
-        setProfile(profileData ?? null)
-      } else {
+      try {
+        const { data } = await Promise.race([
+          supabase.auth.getSession(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+        ])
+        const sessionUser = data?.session?.user ?? null
+        setUser(sessionUser)
+        if (sessionUser) {
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', sessionUser.id)
+            .single()
+          setProfile(profileData ?? null)
+        } else {
+          setProfile(null)
+        }
+      } catch {
+        setUser(null)
         setProfile(null)
+      } finally {
+        setInitialLoading(false)
       }
-
-      setInitialLoading(false)
     }
-
+    
     load()
 
     const {
