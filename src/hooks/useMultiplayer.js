@@ -243,6 +243,6 @@ export function useMultiplayer() {
 
   return {
     room, players, gameState, messages, loading, error,
-    createRoom, joinRoom, leaveRoom, setReady, startGame, updateGameState, sendMessage, finishGame,
+    createRoom, joinRoom, leaveRoom, setReady, startGame, updateGameState, sendMessage, finishGame, subscribeToRoom,
   }
 }

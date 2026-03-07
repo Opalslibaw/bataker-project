@@ -214,7 +214,7 @@ export function MultiplayerGamePage() {
   const location = useLocation()
   const navigate = useNavigate()
   const { user, profile } = useAuth()
-  const { room: liveRoom, players, gameState, messages, setReady, startGame, updateGameState, sendMessage, leaveRoom } = useMultiplayer()
+  const { room: liveRoom, players, gameState, messages, setReady, startGame, updateGameState, sendMessage, leaveRoom, subscribeToRoom } = useMultiplayer()
 
   const initRoom = location.state?.room
   const isHost = location.state?.isHost ?? false
@@ -226,6 +226,9 @@ export function MultiplayerGamePage() {
   const [chatOpen, setChatOpen] = useState(true)
 
   const room = liveRoom || initRoom
+  useEffect(() => {
+    if (initRoom?.id) subscribeToRoom(initRoom.id)
+  }, [initRoom?.id])
 
   // sync game state from realtime
   useEffect(() => { if (gameState) setLocalGameState(gameState) }, [gameState])
