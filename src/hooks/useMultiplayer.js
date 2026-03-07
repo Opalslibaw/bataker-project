@@ -180,7 +180,9 @@ export function useMultiplayer() {
   // ── send message ──
   const sendMessage = useCallback(async ({ roomId, userId, username, text }) => {
     if (!text.trim()) return
-    await supabase.from('messages').insert({ room_id: roomId, user_id: userId, username, content: text.trim() })
+    console.log('SEND MSG:', { roomId, userId, username, text })
+    const { error } = await supabase.from('messages').insert({ room_id: roomId, user_id: userId, username, content: text.trim() })
+    console.log('MSG ERROR:', error)
   }, [])
 
   // ── finish game ──
