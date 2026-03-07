@@ -54,8 +54,12 @@ export function useMultiplayer() {
     // messages
     const msgCh = supabase
       .channel(`messages:${roomId}`)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `room_id=eq.${roomId}` },
-        (payload) => { if (payload.new) setMessages((prev) => [...prev, payload.new]) })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' },
+        (payload) => { 
+          if (payload.new && payload.new.room_id === roomId) {
+            setMessages((prev) => [...prev, payload.new]) 
+          }
+        })
       .subscribe()
 
     subsRef.current = [roomCh, playersCh, stateCh, msgCh]
