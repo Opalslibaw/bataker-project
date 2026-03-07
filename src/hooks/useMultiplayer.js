@@ -1,13 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase.js'
 
-// ── helpers ──────────────────────────────────────────────
 function genCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
   return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
 }
 
-// ── hook ─────────────────────────────────────────────────
 export function useMultiplayer() {
   const [room, setRoom] = useState(null)
   const [players, setPlayers] = useState([])
@@ -17,15 +15,49 @@ export function useMultiplayer() {
   const [error, setError] = useState(null)
 
   const subsRef = useRef([])
+  const roomIdRef = useRef(null)
+  // Polling fallback for messages in case WebSocket fails
+  const pollRef = useRef(null)
+  const lastMsgIdRef = useRef(null)
 
   const clearSubs = () => {
     subsRef.current.forEach((s) => supabase.removeChannel(s))
     subsRef.current = []
+    if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null }
   }
 
-  // ── subscribe to room changes ──
+  const fetchMessages = useCallback(async (roomId) => {
+    const { data } = await supabase
+      .from('messages')
+      .select('*')
+      .eq('room_id', roomId)
+      .order('created_at')
+      .limit(100)
+    if (data) {
+      setMessages(data)
+      if (data.length > 0) lastMsgIdRef.current = data[data.length - 1].id
+    }
+  }, [])
+
+  const startMsgPolling = useCallback((roomId) => {
+    if (pollRef.current) clearInterval(pollRef.current)
+    // Poll every 2 seconds as fallback
+    pollRef.current = setInterval(async () => {
+      const { data } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('room_id', roomId)
+        .order('created_at')
+        .limit(100)
+      if (data) {
+        setMessages(data)
+      }
+    }, 2000)
+  }, [])
+
   const subscribeToRoom = useCallback((roomId) => {
     clearSubs()
+    roomIdRef.current = roomId
 
     // room status
     const roomCh = supabase
@@ -51,21 +83,32 @@ export function useMultiplayer() {
         (payload) => { if (payload.new) setGameState(payload.new.state) })
       .subscribe()
 
-    // messages
+    // messages — realtime + polling fallback
     const msgCh = supabase
       .channel(`messages:${roomId}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' },
-        (payload) => { 
+        (payload) => {
           if (payload.new && payload.new.room_id === roomId) {
-            setMessages((prev) => [...prev, payload.new]) 
+            setMessages((prev) => {
+              // avoid duplicates
+              if (prev.find(m => m.id === payload.new.id)) return prev
+              return [...prev, payload.new]
+            })
           }
         })
-      .subscribe()
+      .subscribe((status) => {
+        // If WebSocket fails, start polling fallback
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          startMsgPolling(roomId)
+        }
+      })
 
     subsRef.current = [roomCh, playersCh, stateCh, msgCh]
-  }, [])
 
-  // ── create room ──
+    // Always start polling as fallback (stops if realtime works fine)
+    startMsgPolling(roomId)
+  }, [startMsgPolling])
+
   const createRoom = useCallback(async ({ userId, username, maxPlayers = 4 }) => {
     setLoading(true); setError(null)
     try {
@@ -96,7 +139,6 @@ export function useMultiplayer() {
     }
   }, [subscribeToRoom])
 
-  // ── join room by code ──
   const joinRoom = useCallback(async ({ code, userId, username }) => {
     setLoading(true); setError(null)
     try {
@@ -127,9 +169,7 @@ export function useMultiplayer() {
       const { data: stateData } = await supabase.from('game_states').select('*').eq('room_id', roomData.id).single()
       if (stateData) setGameState(stateData.state)
 
-      const { data: msgData } = await supabase.from('messages').select('*').eq('room_id', roomData.id).order('created_at').limit(50)
-      setMessages(msgData || [])
-
+      await fetchMessages(roomData.id)
       subscribeToRoom(roomData.id)
       return { ok: true, room: roomData }
     } catch (e) {
@@ -138,9 +178,8 @@ export function useMultiplayer() {
     } finally {
       setLoading(false)
     }
-  }, [subscribeToRoom])
+  }, [subscribeToRoom, fetchMessages])
 
-  // ── leave room ──
   const leaveRoom = useCallback(async ({ roomId, userId, isHost }) => {
     try {
       await supabase.from('room_players').delete().eq('room_id', roomId).eq('user_id', userId)
@@ -154,12 +193,10 @@ export function useMultiplayer() {
     }
   }, [])
 
-  // ── set ready ──
   const setReady = useCallback(async ({ roomId, userId, isReady }) => {
     await supabase.from('room_players').update({ is_ready: isReady }).eq('room_id', roomId).eq('user_id', userId)
   }, [])
 
-  // ── start game (host only) ──
   const startGame = useCallback(async ({ roomId, initialState }) => {
     await supabase.from('game_rooms').update({ status: 'playing' }).eq('id', roomId)
     const { data: existing } = await supabase.from('game_states').select('id').eq('room_id', roomId).single()
@@ -170,31 +207,35 @@ export function useMultiplayer() {
     }
   }, [])
 
-  // ── update game state ──
   const updateGameState = useCallback(async ({ roomId, state }) => {
     await supabase.from('game_states')
       .update({ state, updated_at: new Date().toISOString() })
       .eq('room_id', roomId)
   }, [])
 
-  // ── send message ──
   const sendMessage = useCallback(async ({ roomId, userId, username, text }) => {
     if (!text.trim()) return
-    console.log('SEND MSG:', { roomId, userId, username, text })
-    const { error } = await supabase.from('messages').insert({ room_id: roomId, user_id: userId, username, content: text.trim() })
-    console.log('MSG ERROR:', error)
-  }, [])
+    const { error } = await supabase.from('messages').insert({
+      room_id: roomId,
+      user_id: userId,
+      username,
+      content: text.trim()
+    })
+    if (!error && roomIdRef.current) {
+      // Immediately fetch latest messages after sending
+      await fetchMessages(roomId)
+    }
+  }, [fetchMessages])
 
-  // ── finish game ──
   const finishGame = useCallback(async ({ roomId, winnerIds, loserIds }) => {
     await supabase.from('game_rooms').update({ status: 'finished' }).eq('id', roomId)
     for (const uid of winnerIds) {
-      await supabase.rpc('increment_stats', { uid, won: true }).catch(() => {
-        supabase.from('profiles').update({ games_played: supabase.rpc('games_played + 1'), games_won: supabase.rpc('games_won + 1') }).eq('id', uid)
-      })
+      const { data } = await supabase.from('profiles').select('games_played,games_won').eq('id', uid).single()
+      if (data) await supabase.from('profiles').update({ games_played: (data.games_played||0)+1, games_won: (data.games_won||0)+1 }).eq('id', uid)
     }
     for (const uid of loserIds) {
-      await supabase.rpc('increment_stats', { uid, won: false }).catch(() => {})
+      const { data } = await supabase.from('profiles').select('games_played,games_lost').eq('id', uid).single()
+      if (data) await supabase.from('profiles').update({ games_played: (data.games_played||0)+1, games_lost: (data.games_lost||0)+1 }).eq('id', uid)
     }
   }, [])
 

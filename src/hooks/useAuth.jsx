@@ -15,58 +15,41 @@ export function AuthProvider({ children }) {
   const [initialLoading, setInitialLoading] = useState(true)
   const [authLoading, setAuthLoading] = useState(false)
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const { data } = await Promise.race([
-          supabase.auth.getSession(),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 10000))
-        ])
-        const sessionUser = data?.session?.user ?? null
-        setUser(sessionUser)
-        if (sessionUser) {
-          const { data: profileData } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', sessionUser.id)
-            .single()
-          setProfile(profileData ?? null)
-        } else {
-          setProfile(null)
-        }
-      } catch (err) {
-        if (err.message === 'timeout') {
-          // timeout — jangan logout, biarkan user tetap
-        } else {
-          setUser(null)
-          setProfile(null)
-        }
-      } finally {
-        setInitialLoading(false)
-      }
-    }
-    
-    load()
+  const fetchProfile = async (uid) => {
+    if (!uid) return null
+    const { data } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', uid)
+      .single()
+    return data ?? null
+  }
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+  useEffect(() => {
+    let mounted = true
+
+    // Listen to auth state changes first — this fires immediately if session exists
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (!mounted) return
       const sessionUser = session?.user ?? null
       setUser(sessionUser)
-
       if (sessionUser) {
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', sessionUser.id)
-          .single()
-        setProfile(profileData ?? null)
+        const profileData = await fetchProfile(sessionUser.id)
+        if (mounted) setProfile(profileData)
       } else {
         setProfile(null)
       }
+      if (mounted) setInitialLoading(false)
     })
 
+    // Fallback: if onAuthStateChange doesn't fire within 3s, stop loading
+    const fallbackTimer = setTimeout(() => {
+      if (mounted) setInitialLoading(false)
+    }, 3000)
+
     return () => {
+      mounted = false
+      clearTimeout(fallbackTimer)
       subscription.unsubscribe()
     }
   }, [])
@@ -74,13 +57,8 @@ export function AuthProvider({ children }) {
   const signIn = async ({ email, password }) => {
     setAuthLoading(true)
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
-      if (error) {
-        return { ok: false, message: error.message }
-      }
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) return { ok: false, message: error.message }
       return { ok: true }
     } finally {
       setAuthLoading(false)
@@ -90,18 +68,8 @@ export function AuthProvider({ children }) {
   const signUp = async ({ username, email, password }) => {
     setAuthLoading(true)
     try {
-      const {
-        data: { user: newUser },
-        error,
-      } = await supabase.auth.signUp({
-        email,
-        password,
-      })
-
-      if (error || !newUser) {
-        return { ok: false, message: error?.message || 'Gagal mendaftar.' }
-      }
-
+      const { data: { user: newUser }, error } = await supabase.auth.signUp({ email, password })
+      if (error || !newUser) return { ok: false, message: error?.message || 'Gagal mendaftar.' }
       const { error: profileError } = await supabase.from('profiles').insert({
         id: newUser.id,
         username,
@@ -110,14 +78,7 @@ export function AuthProvider({ children }) {
         games_won: 0,
         games_lost: 0,
       })
-
-      if (profileError) {
-        return {
-          ok: false,
-          message: 'Akun dibuat tapi gagal menyimpan profil. Coba lagi.',
-        }
-      }
-
+      if (profileError) return { ok: false, message: 'Akun dibuat tapi gagal menyimpan profil. Coba lagi.' }
       return { ok: true }
     } finally {
       setAuthLoading(false)
@@ -132,25 +93,12 @@ export function AuthProvider({ children }) {
 
   const refreshProfile = async () => {
     if (!user) return
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .single()
-    setProfile(data ?? null)
+    const data = await fetchProfile(user.id)
+    setProfile(data)
   }
 
   const value = useMemo(
-    () => ({
-      user,
-      profile,
-      initialLoading,
-      authLoading,
-      signIn,
-      signUp,
-      signOut,
-      refreshProfile
-    }),
+    () => ({ user, profile, initialLoading, authLoading, signIn, signUp, signOut, refreshProfile }),
     [user, profile, initialLoading, authLoading],
   )
 
@@ -162,4 +110,3 @@ export function useAuth() {
   if (!ctx) throw new Error('useAuth must be used within AuthProvider')
   return ctx
 }
-
