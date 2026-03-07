@@ -53,7 +53,7 @@ function nextActiveIndex(players, fromIndex) {
   return fromIndex
 }
 
-function leftNeighborIndex(players, fromIndex) {
+function rightNeighborIndex(players, fromIndex) {
   const total = players.length
   let idx = fromIndex
   for (let i = 0; i < total - 1; i += 1) {
@@ -84,7 +84,7 @@ function gameReducer(state, action) {
       const { players, current } = state
       const currentPlayer = players[current]
       if (!currentPlayer || currentPlayer.out || currentPlayer.hand.length === 0) return { ...state, current: nextActiveIndex(players, current) }
-      const neighbor = leftNeighborIndex(players, current)
+      const neighbor = rightNeighborIndex(players, current)
       if (neighbor == null) return state
       const source = players[neighbor]
       if (source.hand.length === 0) return { ...state, current: nextActiveIndex(players, current) }
@@ -109,6 +109,11 @@ function gameReducer(state, action) {
       return { players: newPlayers, current: nextActiveIndex(newPlayers, current), status: 'playing', loserIndex: null, pairInfo: createdPair ? { playerId: newTarget.id, rank: card.rank } : null, jokerInfo: card.rank === 'JOKER' ? { playerId: newTarget.id } : null }
     }
     case 'CLEAR_PAIR_ANIM': return { ...state, pairInfo: null }
+    case 'SHUFFLE_HAND': {
+      const newPlayers = state.players.map((p) => ({ ...p, hand: [...p.hand] }))
+      newPlayers[0].hand = shuffle(newPlayers[0].hand)
+      return { ...state, players: newPlayers }
+    }
     case 'CLEAR_JOKER_ANIM': return { ...state, jokerInfo: null }
     default: return state
   }
@@ -298,7 +303,7 @@ export function GamePage() {
   }, [])
 
   const currentPlayer = state.players[state.current] || null
-  const neighbor = state.players.length > 0 ? leftNeighborIndex(state.players, state.current) : null
+  const neighbor = state.players.length > 0 ? rightNeighborIndex(state.players, state.current) : null
   const neighborPlayer = neighbor != null ? state.players[neighbor] : null
   const isPairForUser = state.pairInfo && state.pairInfo.playerId === 0
   const isJokerForUser = state.jokerInfo && state.jokerInfo.playerId === 0
@@ -503,20 +508,27 @@ export function GamePage() {
         <div style={{ height: 1, background: 'linear-gradient(90deg,transparent,rgba(241,196,15,0.2),transparent)', margin: '0 24px' }} />
 
         {/* Player's hand */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
-            <p style={{ fontFamily: 'Perpetua,Georgia,serif', fontSize: 14, color: '#F1C40F' }}>
-              🃏 Kartu Kamu ({state.players[0]?.hand.length ?? 0})
-            </p>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+          <p style={{ fontFamily: 'Perpetua,Georgia,serif', fontSize: 14, color: '#F1C40F' }}>
+            🃏 Kartu Kamu ({state.players[0]?.hand.length ?? 0})
+          </p>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <motion.button type="button"
+              onClick={() => dispatch({ type: 'SHUFFLE_HAND' })}
+              whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+              style={{
+                borderRadius: 9999, padding: '8px 16px', fontSize: 13, fontWeight: 700, border: '1px solid rgba(241,196,15,0.3)',
+                background: 'rgba(241,196,15,0.08)', color: 'rgba(241,196,15,0.8)', cursor: 'pointer',
+              }}>
+              🔀 Kocok
+            </motion.button>
             <motion.button type="button" onClick={handleConfirmDraw}
               disabled={!isMyTurn || selectedIndex == null || shuffling}
               whileHover={isMyTurn && selectedIndex != null ? { scale: 1.05 } : {}}
               whileTap={isMyTurn && selectedIndex != null ? { scale: 0.95 } : {}}
               style={{
                 borderRadius: 9999, padding: '8px 24px', fontSize: 13, fontWeight: 700, border: 'none',
-                background: isMyTurn && selectedIndex != null
-                  ? 'linear-gradient(135deg,#a93226,#e74c3c)'
-                  : 'rgba(255,255,255,0.06)',
+                background: isMyTurn && selectedIndex != null ? 'linear-gradient(135deg,#a93226,#e74c3c)' : 'rgba(255,255,255,0.06)',
                 color: isMyTurn && selectedIndex != null ? '#fff' : 'rgba(255,255,255,0.25)',
                 boxShadow: isMyTurn && selectedIndex != null ? '0 0 20px rgba(192,57,43,0.6)' : 'none',
                 cursor: isMyTurn && selectedIndex != null ? 'pointer' : 'not-allowed',
