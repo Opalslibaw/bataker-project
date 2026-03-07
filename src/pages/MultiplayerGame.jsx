@@ -222,6 +222,7 @@ export function MultiplayerGamePage() {
 
   const [localGameState, setLocalGameState] = useState(null)
   const [selectedIndex, setSelectedIndex] = useState(null)
+  const [handOrder, setHandOrder] = useState([])
   const [chatOpen, setChatOpen] = useState(true)
 
   const room = liveRoom || initRoom

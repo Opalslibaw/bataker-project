@@ -42,7 +42,7 @@ function removePairs(hand) {
   return [...remaining, ...hand.filter((c) => c.rank === 'JOKER')]
 }
 
-function nextActiveIndex(players, fromIndex) {
+function nextActiveIndexLeft(players, fromIndex) {
   const total = players.length
   let idx = fromIndex
   for (let i = 0; i < total; i += 1) {
@@ -97,7 +97,7 @@ function gameReducer(state, action) {
       const newSource = newPlayers[neighbor], newTarget = newPlayers[current]
       const [card] = newSource.hand.splice(chosenIndex, 1)
       const beforeHand = [...newTarget.hand]
-      newTarget.hand.push(card)
+      newTarget.hand = [...newTarget.hand, card]
       const createdPair = card.rank !== 'JOKER' && beforeHand.some((c) => c.rank === card.rank)
       newTarget.hand = removePairs(newTarget.hand)
       for (let i = 0; i < newPlayers.length; i += 1) { if (newPlayers[i].hand.length === 0) newPlayers[i].out = true }
@@ -106,7 +106,7 @@ function gameReducer(state, action) {
         const loser = stillActive[0], loserIndex = newPlayers.findIndex((p) => p.id === loser.id)
         return { players: newPlayers, current, status: 'finished', loserIndex, pairInfo: createdPair ? { playerId: newTarget.id, rank: card.rank } : null, jokerInfo: card.rank === 'JOKER' ? { playerId: newTarget.id } : null }
       }
-      return { players: newPlayers, current: nextActiveIndex(newPlayers, current), status: 'playing', loserIndex: null, pairInfo: createdPair ? { playerId: newTarget.id, rank: card.rank } : null, jokerInfo: card.rank === 'JOKER' ? { playerId: newTarget.id } : null }
+      return { players: newPlayers, current: nextActiveIndexLeft(newPlayers, current), status: 'playing', loserIndex: null, pairInfo: createdPair ? { playerId: newTarget.id, rank: card.rank } : null, jokerInfo: card.rank === 'JOKER' ? { playerId: newTarget.id } : null }
     }
     case 'CLEAR_PAIR_ANIM': return { ...state, pairInfo: null }
     case 'SHUFFLE_HAND': {
@@ -296,6 +296,7 @@ export function GamePage() {
     run()
   }, [state.status, user])
   const [selectedIndex, setSelectedIndex] = useState(null)
+  const [handOrder, setHandOrder] = useState([])
 
   useEffect(() => {
     const id = setTimeout(() => { dispatch({ type: 'INIT' }); setShuffling(false) }, 1800)
@@ -328,8 +329,10 @@ export function GamePage() {
 
   const handleConfirmDraw = () => {
     if (state.status !== 'playing' || !currentPlayer || currentPlayer.id !== 0 || selectedIndex == null) return
+    const prevOrder = state.players[0]?.hand.map(c => c.id) || []
     dispatch({ type: 'DRAW', index: selectedIndex })
     setSelectedIndex(null)
+    setHandOrder(prev => [...prevOrder, 'new'])
   }
 
   const handleRestart = () => {
