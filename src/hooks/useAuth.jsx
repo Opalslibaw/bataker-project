@@ -3,6 +3,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react'
 import { supabase } from '../lib/supabase.js'
@@ -14,42 +15,52 @@ export function AuthProvider({ children }) {
   const [profile, setProfile] = useState(null)
   const [initialLoading, setInitialLoading] = useState(true)
   const [authLoading, setAuthLoading] = useState(false)
+  const mountedRef = useRef(true)
 
   const fetchProfile = async (uid) => {
     if (!uid) return null
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', uid)
-      .single()
+    const { data } = await supabase.from('profiles').select('*').eq('id', uid).single()
     return data ?? null
   }
 
   useEffect(() => {
-    let mounted = true
+    mountedRef.current = true
 
-    // Listen to auth state changes first — this fires immediately if session exists
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (!mounted) return
+    const init = async () => {
+      // Get session directly first (works on mobile)
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!mountedRef.current) return
+      
+      if (session?.user) {
+        setUser(session.user)
+        const profileData = await fetchProfile(session.user.id)
+        if (mountedRef.current) setProfile(profileData)
+      } else {
+        setUser(null)
+        setProfile(null)
+      }
+      if (mountedRef.current) setInitialLoading(false)
+    }
+
+    init()
+
+    // Also listen for auth changes (login, logout)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mountedRef.current) return
       const sessionUser = session?.user ?? null
       setUser(sessionUser)
       if (sessionUser) {
         const profileData = await fetchProfile(sessionUser.id)
-        if (mounted) setProfile(profileData)
+        if (mountedRef.current) setProfile(profileData)
       } else {
         setProfile(null)
       }
-      if (mounted) setInitialLoading(false)
+      // Ensure loading stops on any auth event
+      if (mountedRef.current) setInitialLoading(false)
     })
 
-    // Fallback: if onAuthStateChange doesn't fire within 3s, stop loading
-    const fallbackTimer = setTimeout(() => {
-      if (mounted) setInitialLoading(false)
-    }, 3000)
-
     return () => {
-      mounted = false
-      clearTimeout(fallbackTimer)
+      mountedRef.current = false
       subscription.unsubscribe()
     }
   }, [])
@@ -94,7 +105,7 @@ export function AuthProvider({ children }) {
   const refreshProfile = async () => {
     if (!user) return
     const data = await fetchProfile(user.id)
-    setProfile(data)
+    if (mountedRef.current) setProfile(data)
   }
 
   const value = useMemo(

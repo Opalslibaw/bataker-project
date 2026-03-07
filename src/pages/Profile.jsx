@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../hooks/useAuth.jsx'
@@ -16,12 +16,22 @@ const StatCard = ({ label, value, color, glow, delay }) => (
 )
 
 export function ProfilePage() {
-  const { user, profile, signOut } = useAuth()
+  const { user, profile, signOut, refreshProfile } = useAuth()
   const navigate = useNavigate()
   const fileInputRef = useRef(null)
   const [uploading, setUploading] = useState(false)
-  const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || null)
+  const [avatarUrl, setAvatarUrl] = useState(null)
   const [uploadMsg, setUploadMsg] = useState(null)
+
+  // Sync avatarUrl when profile loads/changes
+  useEffect(() => {
+    if (profile?.avatar_url) setAvatarUrl(profile.avatar_url)
+  }, [profile])
+
+  // Refresh profile data when page loads
+  useEffect(() => {
+    if (user) refreshProfile()
+  }, [user])
 
   const handleLogout = async () => {
     await signOut()
@@ -38,38 +48,32 @@ export function ProfilePage() {
   const handleFileChange = async (e) => {
     const file = e.target.files?.[0]
     if (!file || !user) return
-
     const maxSize = 2 * 1024 * 1024
     if (file.size > maxSize) {
       setUploadMsg({ ok: false, text: 'File terlalu besar. Maksimal 2MB.' })
       setTimeout(() => setUploadMsg(null), 3000)
       return
     }
-
     setUploading(true)
     setUploadMsg(null)
-
     const ext = file.name.split('.').pop()
     const path = `${user.id}/avatar.${ext}`
-
     const { error: uploadError } = await supabase.storage
       .from('avatars')
       .upload(path, file, { upsert: true })
-
     if (uploadError) {
       setUploadMsg({ ok: false, text: 'Gagal upload. Coba lagi.' })
       setUploading(false)
       setTimeout(() => setUploadMsg(null), 3000)
       return
     }
-
     const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(path)
     const publicUrl = urlData.publicUrl + '?t=' + Date.now()
-
     await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', user.id)
     setAvatarUrl(publicUrl)
     setUploading(false)
     setUploadMsg({ ok: true, text: 'Foto profil berhasil diperbarui!' })
+    await refreshProfile()
     setTimeout(() => setUploadMsg(null), 3000)
   }
 
@@ -81,12 +85,10 @@ export function ProfilePage() {
 
   return (
     <section className="space-y-6">
-      {/* bg aura */}
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden rounded-2xl">
         <div style={{ background: 'radial-gradient(ellipse at top,rgba(241,196,15,0.1) 0%,transparent 55%),radial-gradient(ellipse at bottom,rgba(192,57,43,0.12) 0%,transparent 55%)', position: 'absolute', inset: 0 }} />
       </div>
 
-      {/* Header */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
         <p className="text-xs uppercase tracking-[0.35em]" style={{ color: 'rgba(241,196,15,0.55)' }}>Akun Pemain</p>
         <h1 className="font-perpetua text-3xl md:text-4xl" style={{ color: '#f5d87a', textShadow: '0 0 18px rgba(241,196,15,0.35)' }}>
@@ -94,12 +96,10 @@ export function ProfilePage() {
         </h1>
       </motion.div>
 
-      {/* Profile card */}
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
         className="rounded-2xl p-5 md:p-6"
         style={{ border: '1px solid rgba(241,196,15,0.18)', background: 'rgba(0,0,0,0.55)', boxShadow: '0 0 30px rgba(241,196,15,0.08)' }}>
         <div className="flex flex-wrap items-center gap-4">
-          {/* Avatar - clickable */}
           <div className="relative shrink-0 cursor-pointer group" onClick={handleAvatarClick}>
             <div className="flex h-20 w-20 items-center justify-center rounded-full overflow-hidden"
               style={{
@@ -113,7 +113,6 @@ export function ProfilePage() {
                 <span className="text-3xl">🃏</span>
               )}
             </div>
-            {/* Hover overlay */}
             <div className="absolute inset-0 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
               style={{ background: 'rgba(0,0,0,0.6)' }}>
               {uploading ? (
@@ -150,7 +149,6 @@ export function ProfilePage() {
           </motion.button>
         </div>
 
-        {/* Upload message */}
         <AnimatePresence>
           {uploadMsg && (
             <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
@@ -166,7 +164,6 @@ export function ProfilePage() {
         </AnimatePresence>
       </motion.div>
 
-      {/* Stats */}
       <div>
         <p className="mb-3 text-xs uppercase tracking-[0.3em]" style={{ color: 'rgba(241,196,15,0.45)' }}>Statistik</p>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -177,20 +174,17 @@ export function ProfilePage() {
         </div>
       </div>
 
-      {/* Modes */}
       <div>
         <p className="mb-3 text-xs uppercase tracking-[0.3em]" style={{ color: 'rgba(241,196,15,0.45)' }}>Mode Permainan</p>
         <div className="grid gap-3 sm:grid-cols-2">
           {[
             {
               title: 'Lawan Bot', desc: 'Bermain melawan AI. Cocok untuk latihan dan menguasai strategi Joker Card.',
-              icon: '🤖', available: true, action: () => navigate('/game'),
-              btnLabel: 'Main Sekarang',
+              icon: '🤖', action: () => navigate('/game'), btnLabel: 'Main Sekarang',
             },
             {
               title: 'Multiplayer Online', desc: 'Tantang pemain lain secara real-time. Buat room atau join room teman.',
-              icon: '🌐', available: true, action: () => navigate('/lobby'),
-              btnLabel: 'Masuk Lobby',
+              icon: '🌐', action: () => navigate('/lobby'), btnLabel: 'Masuk Lobby',
             },
           ].map((mode, i) => (
             <motion.div key={mode.title}
