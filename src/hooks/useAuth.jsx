@@ -44,6 +44,11 @@ export function AuthProvider({ children }) {
 
     init()
 
+    // Fallback jika init lambat di mobile
+    const fallbackTimer = setTimeout(() => {
+      if (mountedRef.current) setInitialLoading(false)
+    }, 1500)
+
     // Also listen for auth changes (login, logout)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mountedRef.current) return
@@ -61,6 +66,7 @@ export function AuthProvider({ children }) {
 
     return () => {
       mountedRef.current = false
+      clearTimeout(fallbackTimer)
       subscription.unsubscribe()
     }
   }, [])
