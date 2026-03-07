@@ -269,7 +269,7 @@ export function GamePage() {
   const [state, dispatch] = useReducer(gameReducer, initialState)
   const [shuffling, setShuffling] = useState(true)
 
-  const { user } = useAuth()
+  const { user, refreshProfile } = useAuth()
   useEffect(() => {
     console.log("STATS DEBUG:", state.status, user?.id)
     console.log('STATUS CHECK:', state.status, 'USER:', user?.id)
@@ -286,6 +286,7 @@ export function GamePage() {
         games_lost: (data.games_lost || 0) + (iLost ? 1 : 0),
       }).eq('id', user.id)
       console.log("UPDATE ERROR:", updateError)
+      refreshProfile()
     }
     run()
   }, [state.status, user])
