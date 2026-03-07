@@ -28,7 +28,12 @@ export function ProfilePage() {
     navigate('/', { replace: true })
   }
 
-  const handleAvatarClick = () => fileInputRef.current?.click()
+  const handleAvatarClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+      fileInputRef.current.click()
+    }
+  }
 
   const handleFileChange = async (e) => {
     const file = e.target.files?.[0]
@@ -120,7 +125,7 @@ export function ProfilePage() {
                 <span className="text-lg">📷</span>
               )}
             </div>
-            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+            <input ref={fileInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileChange} />
           </div>
 
           <div className="min-w-0 flex-1">
