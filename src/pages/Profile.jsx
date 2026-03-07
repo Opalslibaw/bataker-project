@@ -125,7 +125,7 @@ export function ProfilePage() {
                 <span className="text-lg">📷</span>
               )}
             </div>
-            <input ref={fileInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileChange} />
+            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
           </div>
 
           <div className="min-w-0 flex-1">
