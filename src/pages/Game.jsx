@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../hooks/useAuth.jsx'
-import { useEffect, useReducer, useState } from 'react'
+import { useEffect, useReducer, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K']
@@ -46,7 +46,7 @@ function nextActiveIndexLeft(players, fromIndex) {
   const total = players.length
   let idx = fromIndex
   for (let i = 0; i < total; i += 1) {
-    idx = (idx + 1) % total
+    idx = (idx - 1 + total) % total
     const p = players[idx]
     if (!p.out && p.hand.length > 0) return idx
   }
@@ -83,11 +83,11 @@ function gameReducer(state, action) {
       if (state.status !== 'playing') return state
       const { players, current } = state
       const currentPlayer = players[current]
-      if (!currentPlayer || currentPlayer.out || currentPlayer.hand.length === 0) return { ...state, current: nextActiveIndex(players, current) }
+      if (!currentPlayer || currentPlayer.out || currentPlayer.hand.length === 0) return { ...state, current: nextActiveIndexLeft(players, current) }
       const neighbor = rightNeighborIndex(players, current)
       if (neighbor == null) return state
       const source = players[neighbor]
-      if (source.hand.length === 0) return { ...state, current: nextActiveIndex(players, current) }
+      if (source.hand.length === 0) return { ...state, current: nextActiveIndexLeft(players, current) }
       const isUser = currentPlayer.id === 0
       let chosenIndex
       if (isUser && typeof action.index === 'number') chosenIndex = Math.min(Math.max(action.index, 0), source.hand.length - 1)
@@ -97,23 +97,33 @@ function gameReducer(state, action) {
       const newSource = newPlayers[neighbor], newTarget = newPlayers[current]
       const [card] = newSource.hand.splice(chosenIndex, 1)
       const beforeHand = [...newTarget.hand]
-      newTarget.hand = [...newTarget.hand, card]
+      // Insert card at action.insertAt position if provided, else append
+      const insertAt = typeof action.insertAt === 'number' ? action.insertAt : newTarget.hand.length
+      newTarget.hand.splice(insertAt, 0, card)
       const createdPair = card.rank !== 'JOKER' && beforeHand.some((c) => c.rank === card.rank)
       newTarget.hand = removePairs(newTarget.hand)
       for (let i = 0; i < newPlayers.length; i += 1) { if (newPlayers[i].hand.length === 0) newPlayers[i].out = true }
       const stillActive = newPlayers.filter((p) => !p.out && p.hand.length > 0)
+      // Fix bug: loser is the LAST person with joker, need exactly 1 active with joker
       if (stillActive.length === 1) {
-        const loser = stillActive[0], loserIndex = newPlayers.findIndex((p) => p.id === loser.id)
+        const loser = stillActive[0]
+        const loserIndex = newPlayers.findIndex((p) => p.id === loser.id)
         return { players: newPlayers, current, status: 'finished', loserIndex, pairInfo: createdPair ? { playerId: newTarget.id, rank: card.rank } : null, jokerInfo: card.rank === 'JOKER' ? { playerId: newTarget.id } : null }
       }
       return { players: newPlayers, current: nextActiveIndexLeft(newPlayers, current), status: 'playing', loserIndex: null, pairInfo: createdPair ? { playerId: newTarget.id, rank: card.rank } : null, jokerInfo: card.rank === 'JOKER' ? { playerId: newTarget.id } : null }
     }
-    case 'CLEAR_PAIR_ANIM': return { ...state, pairInfo: null }
     case 'SHUFFLE_HAND': {
       const newPlayers = state.players.map((p) => ({ ...p, hand: [...p.hand] }))
       newPlayers[0].hand = shuffle(newPlayers[0].hand)
       return { ...state, players: newPlayers }
     }
+    case 'SET_HAND_ORDER': {
+      // Reorder player 0 hand based on provided order
+      const newPlayers = state.players.map((p) => ({ ...p, hand: [...p.hand] }))
+      newPlayers[0].hand = action.order
+      return { ...state, players: newPlayers }
+    }
+    case 'CLEAR_PAIR_ANIM': return { ...state, pairInfo: null }
     case 'CLEAR_JOKER_ANIM': return { ...state, jokerInfo: null }
     default: return state
   }
@@ -157,7 +167,6 @@ function CardFace({ card, size = 'md', glow = false, selected = false, onClick, 
           <span style={{ fontSize: s.suit, alignSelf: 'flex-start', lineHeight: 1 }}>🃏</span>
           <span style={{ fontSize: s.rank + 4, lineHeight: 1 }}>🃏</span>
           <span style={{ fontSize: s.suit, alignSelf: 'flex-end', lineHeight: 1, transform: 'rotate(180deg)' }}>🃏</span>
-          {/* red glow overlay */}
           <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle,rgba(192,57,43,0.15),transparent 70%)', borderRadius: 7, pointerEvents: 'none' }} />
         </>
       ) : (
@@ -201,7 +210,6 @@ function CardBack({ size = 'md', highlighted = false, selected = false, onClick,
         transition: 'box-shadow 0.2s',
       }}
     >
-      {/* card back pattern */}
       <div style={{
         position: 'absolute', inset: 4, borderRadius: 5,
         border: '1px solid rgba(241,196,15,0.25)',
@@ -228,7 +236,6 @@ function BotPlayer({ player, isCurrent }) {
         backdropFilter: 'blur(8px)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
       }}
     >
-      {/* avatar */}
       <div style={{
         width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
         background: player.out ? 'rgba(255,255,255,0.05)' : isCurrent ? 'linear-gradient(135deg,#5b1fa0,#8e44ad)' : 'rgba(241,196,15,0.1)',
@@ -238,7 +245,6 @@ function BotPlayer({ player, isCurrent }) {
       }}>
         🤖
       </div>
-
       <div style={{ textAlign: 'center' }}>
         <p style={{ fontFamily: 'Perpetua, Georgia, serif', fontSize: 13, color: player.out ? 'rgba(241,196,15,0.3)' : '#F1C40F', lineHeight: 1 }}>
           {player.name}
@@ -249,8 +255,6 @@ function BotPlayer({ player, isCurrent }) {
             style={{ fontSize: 10, color: 'rgba(241,196,15,0.8)', marginTop: 2 }}>Berpikir...</motion.p>
         )}
       </div>
-
-      {/* card backs */}
       {!player.out && player.hand.length > 0 && (
         <div style={{ display: 'flex', justifyContent: 'center' }}>
           {player.hand.slice(0, 7).map((_, idx) => (
@@ -273,35 +277,59 @@ function BotPlayer({ player, isCurrent }) {
 export function GamePage() {
   const [state, dispatch] = useReducer(gameReducer, initialState)
   const [shuffling, setShuffling] = useState(true)
-
   const { user, refreshProfile } = useAuth()
+  const statsUpdated = useRef(false)
+
   useEffect(() => {
-    console.log("STATS DEBUG:", state.status, user?.id)
-    console.log('STATUS CHECK:', state.status, 'USER:', user?.id)
-    if (state.status !== 'finished' || !user) return
+    if (state.status !== 'finished' || !user || statsUpdated.current) return
+    statsUpdated.current = true
     const loser = state.players[state.loserIndex]
     const iLost = loser?.id === 0
     const run = async () => {
-      const { data, error } = await supabase.from('profiles').select('games_played,games_won,games_lost').eq('id', user.id).single()
-      console.log("SUPABASE DATA:", data, "ERROR:", error)
+      const { data } = await supabase.from('profiles').select('games_played,games_won,games_lost').eq('id', user.id).single()
       if (!data) return
-      const { error: updateError } = await supabase.from('profiles').update({
+      await supabase.from('profiles').update({
         games_played: (data.games_played || 0) + 1,
         games_won: (data.games_won || 0) + (iLost ? 0 : 1),
         games_lost: (data.games_lost || 0) + (iLost ? 1 : 0),
       }).eq('id', user.id)
-      console.log("UPDATE ERROR:", updateError)
       refreshProfile()
     }
     run()
   }, [state.status, user])
+
   const [selectedIndex, setSelectedIndex] = useState(null)
-  const [handOrder, setHandOrder] = useState([])
+  // handOrder tracks the display order of player 0's cards by card id
+  const [handOrder, setHandOrder] = useState(null)
 
   useEffect(() => {
-    const id = setTimeout(() => { dispatch({ type: 'INIT' }); setShuffling(false) }, 1800)
+    const id = setTimeout(() => { dispatch({ type: 'INIT' }); setShuffling(false); statsUpdated.current = false }, 1800)
     return () => clearTimeout(id)
   }, [])
+
+  // Sync handOrder when hand changes (new card added) — preserve existing order, append new card
+  const prevHandRef = useRef([])
+  useEffect(() => {
+    const hand = state.players[0]?.hand || []
+    if (handOrder === null) {
+      setHandOrder(hand.map(c => c.id))
+      prevHandRef.current = hand.map(c => c.id)
+      return
+    }
+    const prevIds = prevHandRef.current
+    const newIds = hand.map(c => c.id)
+    // Find cards added
+    const added = newIds.filter(id => !prevIds.includes(id))
+    // Find cards removed
+    const removed = prevIds.filter(id => !newIds.includes(id))
+    if (added.length > 0 || removed.length > 0) {
+      // Keep existing order, remove gone cards, append new cards
+      let updated = handOrder.filter(id => newIds.includes(id))
+      added.forEach(id => updated.push(id))
+      setHandOrder(updated)
+    }
+    prevHandRef.current = newIds
+  }, [state.players])
 
   const currentPlayer = state.players[state.current] || null
   const neighbor = state.players.length > 0 ? rightNeighborIndex(state.players, state.current) : null
@@ -329,38 +357,51 @@ export function GamePage() {
 
   const handleConfirmDraw = () => {
     if (state.status !== 'playing' || !currentPlayer || currentPlayer.id !== 0 || selectedIndex == null) return
-    const prevOrder = state.players[0]?.hand.map(c => c.id) || []
-    dispatch({ type: 'DRAW', index: selectedIndex })
+    // Insert new card at position selectedIndex in current hand order
+    dispatch({ type: 'DRAW', index: selectedIndex, insertAt: selectedIndex })
     setSelectedIndex(null)
-    setHandOrder(prev => [...prevOrder, 'new'])
+  }
+
+  const handleShuffle = () => {
+    dispatch({ type: 'SHUFFLE_HAND' })
+    // Also shuffle handOrder
+    const hand = state.players[0]?.hand || []
+    const shuffled = shuffle(hand)
+    setHandOrder(shuffled.map(c => c.id))
   }
 
   const handleRestart = () => {
-    setSelectedIndex(null); setShuffling(true)
+    setSelectedIndex(null)
+    setHandOrder(null)
+    statsUpdated.current = false
+    setShuffling(true)
     const id = setTimeout(() => { dispatch({ type: 'INIT' }); setShuffling(false) }, 1000)
     return () => clearTimeout(id)
   }
 
   const isMyTurn = state.status === 'playing' && currentPlayer?.id === 0
 
+  // Get display hand in correct order
+  const hand0 = state.players[0]?.hand || []
+  const displayHand = handOrder
+    ? handOrder.map(id => hand0.find(c => c.id === id)).filter(Boolean)
+    : hand0
+
   return (
     <section style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 16, minHeight: 500 }}>
 
-      {/* ── Background felt table ── */}
+      {/* Background felt table */}
       <div style={{
         position: 'absolute', inset: 0, borderRadius: 16, overflow: 'hidden', pointerEvents: 'none', zIndex: 0,
         background: 'radial-gradient(ellipse at 50% 50%,rgba(10,40,20,0.9) 0%,rgba(5,20,10,0.95) 60%,rgba(0,0,0,0.98) 100%)',
       }}>
-        {/* felt texture lines */}
         <div style={{ position: 'absolute', inset: 0, opacity: 0.04,
           backgroundImage: 'repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,0.5) 2px,rgba(255,255,255,0.5) 3px),repeating-linear-gradient(90deg,transparent,transparent 2px,rgba(255,255,255,0.5) 2px,rgba(255,255,255,0.5) 3px)' }} />
-        {/* oval table edge */}
         <div style={{ position: 'absolute', inset: 12, borderRadius: 'inherit', border: '2px solid rgba(241,196,15,0.12)', boxShadow: 'inset 0 0 40px rgba(0,0,0,0.5)' }} />
-        {/* center glow */}
         <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 50% 40%,rgba(20,80,40,0.3) 0%,transparent 65%)' }} />
       </div>
 
-      {/* ── Shuffling overlay ── */}
+      {/* Shuffling overlay */}
       <AnimatePresence>
         {shuffling && (
           <motion.div style={{ position: 'absolute', inset: 0, zIndex: 30, borderRadius: 16, background: 'rgba(0,0,0,0.92)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20 }}
@@ -391,7 +432,7 @@ export function GamePage() {
         )}
       </AnimatePresence>
 
-      {/* ── PAIR animation ── */}
+      {/* PAIR animation */}
       <AnimatePresence>
         {isPairForUser && (
           <motion.div style={{ position: 'absolute', inset: 0, zIndex: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}
@@ -417,7 +458,7 @@ export function GamePage() {
         )}
       </AnimatePresence>
 
-      {/* ── JOKER animation ── */}
+      {/* JOKER animation */}
       <AnimatePresence>
         {isJokerForUser && (
           <motion.div style={{ position: 'absolute', inset: 0, zIndex: 30, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
@@ -442,7 +483,7 @@ export function GamePage() {
         )}
       </AnimatePresence>
 
-      {/* ── CONTENT ── */}
+      {/* CONTENT */}
       <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: 16 }}>
 
         {/* Header */}
@@ -477,13 +518,12 @@ export function GamePage() {
           ))}
         </div>
 
-        {/* Divider */}
         <div style={{ height: 1, background: 'linear-gradient(90deg,transparent,rgba(241,196,15,0.2),transparent)', margin: '0 24px' }} />
 
-        {/* Neighbor cards — pick area */}
+        {/* Neighbor cards pick area */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
           <p style={{ fontFamily: 'Perpetua,Georgia,serif', fontSize: 14, color: 'rgba(241,196,15,0.7)' }}>
-            {isMyTurn ? '👇 Pilih 1 kartu dari pemain sebelah kiri' : 'Kartu pemain sebelah kiri'}
+            {isMyTurn ? '👇 Pilih 1 kartu dari pemain sebelah kanan' : 'Kartu pemain sebelah kanan'}
           </p>
           <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: 0 }}>
             {neighborPlayer && neighborPlayer.hand.map((_, idx) => {
@@ -496,7 +536,7 @@ export function GamePage() {
               )
             })}
             {!neighborPlayer && (
-              <p style={{ fontSize: 12, color: 'rgba(241,196,15,0.4)' }}>Tidak ada pemain aktif di kiri.</p>
+              <p style={{ fontSize: 12, color: 'rgba(241,196,15,0.4)' }}>Tidak ada pemain aktif di kanan.</p>
             )}
           </div>
           {selectedIndex != null && (
@@ -507,45 +547,46 @@ export function GamePage() {
           )}
         </div>
 
-        {/* Divider */}
         <div style={{ height: 1, background: 'linear-gradient(90deg,transparent,rgba(241,196,15,0.2),transparent)', margin: '0 24px' }} />
 
         {/* Player's hand */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
-          <p style={{ fontFamily: 'Perpetua,Georgia,serif', fontSize: 14, color: '#F1C40F' }}>
-            🃏 Kartu Kamu ({state.players[0]?.hand.length ?? 0})
-          </p>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <motion.button type="button"
-              onClick={() => dispatch({ type: 'SHUFFLE_HAND' })}
-              whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-              style={{
-                borderRadius: 9999, padding: '8px 16px', fontSize: 13, fontWeight: 700, border: '1px solid rgba(241,196,15,0.3)',
-                background: 'rgba(241,196,15,0.08)', color: 'rgba(241,196,15,0.8)', cursor: 'pointer',
-              }}>
-              🔀 Kocok
-            </motion.button>
-            <motion.button type="button" onClick={handleConfirmDraw}
-              disabled={!isMyTurn || selectedIndex == null || shuffling}
-              whileHover={isMyTurn && selectedIndex != null ? { scale: 1.05 } : {}}
-              whileTap={isMyTurn && selectedIndex != null ? { scale: 0.95 } : {}}
-              style={{
-                borderRadius: 9999, padding: '8px 24px', fontSize: 13, fontWeight: 700, border: 'none',
-                background: isMyTurn && selectedIndex != null ? 'linear-gradient(135deg,#a93226,#e74c3c)' : 'rgba(255,255,255,0.06)',
-                color: isMyTurn && selectedIndex != null ? '#fff' : 'rgba(255,255,255,0.25)',
-                boxShadow: isMyTurn && selectedIndex != null ? '0 0 20px rgba(192,57,43,0.6)' : 'none',
-                cursor: isMyTurn && selectedIndex != null ? 'pointer' : 'not-allowed',
-                transition: 'all 0.2s', letterSpacing: '0.08em',
-              }}>
-              Ambil Kartu →
-            </motion.button>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+            <p style={{ fontFamily: 'Perpetua,Georgia,serif', fontSize: 14, color: '#F1C40F' }}>
+              🃏 Kartu Kamu ({hand0.length})
+            </p>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <motion.button type="button"
+                onClick={handleShuffle}
+                whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                style={{
+                  borderRadius: 9999, padding: '8px 16px', fontSize: 13, fontWeight: 700, border: '1px solid rgba(241,196,15,0.3)',
+                  background: 'rgba(241,196,15,0.08)', color: 'rgba(241,196,15,0.8)', cursor: 'pointer',
+                }}>
+                🔀 Kocok
+              </motion.button>
+              <motion.button type="button" onClick={handleConfirmDraw}
+                disabled={!isMyTurn || selectedIndex == null || shuffling}
+                whileHover={isMyTurn && selectedIndex != null ? { scale: 1.05 } : {}}
+                whileTap={isMyTurn && selectedIndex != null ? { scale: 0.95 } : {}}
+                style={{
+                  borderRadius: 9999, padding: '8px 24px', fontSize: 13, fontWeight: 700, border: 'none',
+                  background: isMyTurn && selectedIndex != null ? 'linear-gradient(135deg,#a93226,#e74c3c)' : 'rgba(255,255,255,0.06)',
+                  color: isMyTurn && selectedIndex != null ? '#fff' : 'rgba(255,255,255,0.25)',
+                  boxShadow: isMyTurn && selectedIndex != null ? '0 0 20px rgba(192,57,43,0.6)' : 'none',
+                  cursor: isMyTurn && selectedIndex != null ? 'pointer' : 'not-allowed',
+                  transition: 'all 0.2s', letterSpacing: '0.08em',
+                }}>
+                Ambil Kartu →
+              </motion.button>
+            </div>
           </div>
 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-            {state.players[0]?.hand.map((card) => (
+            {displayHand.map((card) => (
               <CardFace key={card.id} card={card} size="md" glow={card.rank === 'JOKER'} />
             ))}
-            {state.players[0]?.hand.length === 0 && (
+            {hand0.length === 0 && (
               <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                 style={{ fontSize: 13, color: 'rgba(241,196,15,0.5)', padding: '12px 0' }}>
                 🎉 Kamu sudah bebas! Menunggu pemain lain...
@@ -555,7 +596,7 @@ export function GamePage() {
         </div>
       </div>
 
-      {/* ── GAME OVER MODAL ── */}
+      {/* GAME OVER MODAL */}
       <AnimatePresence>
         {state.status === 'finished' && state.loserIndex != null && (
           <motion.div style={{ position: 'fixed', inset: 0, zIndex: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)' }}
@@ -592,7 +633,6 @@ export function GamePage() {
                     </motion.div>
                   </div>
 
-                  {/* scores */}
                   <div style={{ display: 'flex', justifyContent: 'center', gap: 12, marginBottom: 24, flexWrap: 'wrap' }}>
                     {state.players.map(p => (
                       <div key={p.id} style={{ borderRadius: 12, padding: '8px 14px', textAlign: 'center', minWidth: 70,
