@@ -98,14 +98,12 @@ function gameReducer(state, action) {
       const newSource = newPlayers[neighbor], newTarget = newPlayers[current]
       const [card] = newSource.hand.splice(chosenIndex, 1)
       const beforeHand = [...newTarget.hand]
-      // Insert card at action.insertAt position if provided, else append
       const insertAt = typeof action.insertAt === 'number' ? action.insertAt : newTarget.hand.length
       newTarget.hand.splice(insertAt, 0, card)
       const createdPair = card.rank !== 'JOKER' && beforeHand.some((c) => c.rank === card.rank)
       newTarget.hand = removePairs(newTarget.hand)
       for (let i = 0; i < newPlayers.length; i += 1) { if (newPlayers[i].hand.length === 0) newPlayers[i].out = true }
       const stillActive = newPlayers.filter((p) => !p.out && p.hand.length > 0)
-      // Fix bug: loser is the LAST person with joker, need exactly 1 active with joker
       if (stillActive.length === 1) {
         const loser = stillActive[0]
         const loserIndex = newPlayers.findIndex((p) => p.id === loser.id)
@@ -119,7 +117,6 @@ function gameReducer(state, action) {
       return { ...state, players: newPlayers }
     }
     case 'SET_HAND_ORDER': {
-      // Reorder player 0 hand based on provided order
       const newPlayers = state.players.map((p) => ({ ...p, hand: [...p.hand] }))
       newPlayers[0].hand = action.order
       return { ...state, players: newPlayers }
@@ -130,61 +127,127 @@ function gameReducer(state, action) {
   }
 }
 
-/* ── Card face component ── */
+/* ── STYLES ── */
+const styles = `
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@400;700&display=swap');
+
+  @keyframes tableShimmer {
+    0% { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
+  @keyframes orbFloat {
+    0%, 100% { transform: translateY(0px) scale(1); opacity: 0.4; }
+    50% { transform: translateY(-20px) scale(1.05); opacity: 0.6; }
+  }
+  @keyframes runeRotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  @keyframes cardGlow {
+    0%, 100% { box-shadow: 0 0 15px rgba(241,196,15,0.3), 0 8px 32px rgba(0,0,0,0.8); }
+    50% { box-shadow: 0 0 30px rgba(241,196,15,0.6), 0 8px 32px rgba(0,0,0,0.8); }
+  }
+  @keyframes jokerPulse {
+    0%, 100% { box-shadow: 0 0 20px rgba(192,57,43,0.5), 0 8px 32px rgba(0,0,0,0.8); }
+    50% { box-shadow: 0 0 50px rgba(192,57,43,0.9), 0 8px 32px rgba(0,0,0,0.8); }
+  }
+  @keyframes turnIndicator {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(0.97); }
+  }
+  @keyframes particleRise {
+    0% { opacity: 1; transform: translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateY(-60px) scale(0); }
+  }
+  .game-card-hover:hover {
+    transform: translateY(-16px) scale(1.12) rotate(-2deg) !important;
+    z-index: 10 !important;
+  }
+  .neighbor-card-hover:hover {
+    transform: translateY(-20px) scale(1.15) !important;
+    z-index: 10 !important;
+  }
+`
+
+/* ── Card face ── */
 function CardFace({ card, size = 'md', glow = false, selected = false, onClick, canClick = false }) {
   const isJoker = card.rank === 'JOKER'
   const isRed = RED_SUITS.includes(card.suit)
   const sizes = {
-    sm: { w: 36, h: 52, rank: 10, suit: 11 },
-    md: { w: 52, h: 72, rank: 14, suit: 14 },
-    lg: { w: 64, h: 90, rank: 16, suit: 16 },
+    sm: { w: 38, h: 54, rank: 10, suit: 11 },
+    md: { w: 56, h: 78, rank: 15, suit: 15 },
+    lg: { w: 68, h: 96, rank: 17, suit: 17 },
   }
   const s = sizes[size]
+
   return (
     <motion.div
       onClick={canClick ? onClick : undefined}
-      whileHover={canClick ? { y: -10, scale: 1.08 } : {}}
-      whileTap={canClick ? { scale: 0.95 } : {}}
+      className={canClick ? 'game-card-hover' : ''}
+      whileTap={canClick ? { scale: 0.93 } : {}}
       style={{
-        width: s.w, height: s.h, borderRadius: 8, flexShrink: 0,
+        width: s.w, height: s.h, borderRadius: 10, flexShrink: 0,
         background: isJoker
-          ? 'linear-gradient(135deg,#1a0030,#3d0060,#1a0030)'
-          : 'linear-gradient(160deg,#fdfaf0,#f5f0e0)',
+          ? 'linear-gradient(145deg, #0d0020, #2a0050, #1a0035)'
+          : selected
+          ? 'linear-gradient(160deg, #fffef5, #fff8dc, #f5edd0)'
+          : 'linear-gradient(160deg, #fdfaf0, #f7f0de, #ede0c0)',
         border: selected
           ? '2px solid #F1C40F'
-          : isJoker ? '1px solid rgba(192,57,43,0.7)' : '1px solid rgba(200,180,120,0.5)',
+          : isJoker ? '1.5px solid rgba(220,50,50,0.8)' : '1px solid rgba(190,160,100,0.6)',
         boxShadow: selected
-          ? '0 0 20px rgba(241,196,15,0.9), 0 6px 20px rgba(0,0,0,0.6)'
-          : glow
-          ? '0 0 18px rgba(192,57,43,0.7), 0 4px 12px rgba(0,0,0,0.5)'
-          : '0 4px 12px rgba(0,0,0,0.5)',
+          ? '0 0 25px rgba(241,196,15,1), 0 0 50px rgba(241,196,15,0.4), 0 8px 24px rgba(0,0,0,0.7)'
+          : glow || isJoker
+          ? '0 0 20px rgba(200,50,43,0.8), 0 6px 20px rgba(0,0,0,0.7)'
+          : '0 4px 16px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.3)',
         cursor: canClick ? 'pointer' : 'default',
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between',
-        padding: '4px 3px', position: 'relative', overflow: 'hidden',
+        padding: '5px 4px', position: 'relative', overflow: 'hidden',
+        transition: 'box-shadow 0.2s, transform 0.18s cubic-bezier(0.34,1.56,0.64,1)',
+        animation: isJoker ? 'jokerPulse 2s ease-in-out infinite' : selected ? 'cardGlow 1.5s ease-in-out infinite' : 'none',
       }}
     >
+      {/* Card texture overlay */}
+      {!isJoker && (
+        <div style={{
+          position: 'absolute', inset: 0, borderRadius: 9, pointerEvents: 'none',
+          background: 'repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(0,0,0,0.015) 4px, rgba(0,0,0,0.015) 5px)',
+        }} />
+      )}
+      {/* Corner fold */}
+      {!isJoker && (
+        <div style={{
+          position: 'absolute', bottom: 0, right: 0, width: 10, height: 10,
+          background: 'linear-gradient(225deg, rgba(0,0,0,0.08) 50%, transparent 50%)',
+          borderRadius: '0 0 9px 0', pointerEvents: 'none',
+        }} />
+      )}
+
       {isJoker ? (
         <>
-          <span style={{ fontSize: s.suit, alignSelf: 'flex-start', lineHeight: 1 }}>🃏</span>
-          <span style={{ fontSize: s.rank + 4, lineHeight: 1 }}>🃏</span>
-          <span style={{ fontSize: s.suit, alignSelf: 'flex-end', lineHeight: 1, transform: 'rotate(180deg)' }}>🃏</span>
-          <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle,rgba(192,57,43,0.15),transparent 70%)', borderRadius: 7, pointerEvents: 'none' }} />
+          <span style={{ fontSize: s.suit, alignSelf: 'flex-start', lineHeight: 1, filter: 'drop-shadow(0 0 4px rgba(255,100,100,0.6))' }}>🃏</span>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+            <span style={{ fontSize: s.rank + 6, lineHeight: 1, filter: 'drop-shadow(0 0 8px rgba(255,80,80,0.8))' }}>🃏</span>
+            <span style={{ fontSize: 7, color: 'rgba(255,180,180,0.7)', letterSpacing: '0.2em', fontFamily: 'Cinzel, serif', textTransform: 'uppercase' }}>Joker</span>
+          </div>
+          <span style={{ fontSize: s.suit, alignSelf: 'flex-end', lineHeight: 1, transform: 'rotate(180deg)', filter: 'drop-shadow(0 0 4px rgba(255,100,100,0.6))' }}>🃏</span>
+          <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 50% 50%, rgba(200,50,50,0.2), transparent 70%)', borderRadius: 9, pointerEvents: 'none' }} />
         </>
       ) : (
         <>
           <div style={{ alignSelf: 'flex-start', lineHeight: 1, textAlign: 'left' }}>
-            <div style={{ fontSize: s.rank, fontWeight: 700, color: isRed ? '#c0392b' : '#1a1a2e', lineHeight: 1 }}>{card.rank}</div>
-            <div style={{ fontSize: s.suit - 1, color: isRed ? '#c0392b' : '#1a1a2e', lineHeight: 1 }}>{card.suit}</div>
+            <div style={{ fontSize: s.rank, fontWeight: 800, color: isRed ? '#c0392b' : '#111827', lineHeight: 1, fontFamily: 'Cinzel, serif' }}>{card.rank}</div>
+            <div style={{ fontSize: s.suit - 1, color: isRed ? '#c0392b' : '#111827', lineHeight: 1 }}>{card.suit}</div>
           </div>
-          <div style={{ fontSize: s.suit + 4, color: isRed ? '#c0392b' : '#1a1a2e', lineHeight: 1 }}>{card.suit}</div>
+          <div style={{ fontSize: s.suit + 6, color: isRed ? '#c0392b' : '#111827', lineHeight: 1, filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.2))' }}>{card.suit}</div>
           <div style={{ alignSelf: 'flex-end', lineHeight: 1, textAlign: 'right', transform: 'rotate(180deg)' }}>
-            <div style={{ fontSize: s.rank, fontWeight: 700, color: isRed ? '#c0392b' : '#1a1a2e', lineHeight: 1 }}>{card.rank}</div>
-            <div style={{ fontSize: s.suit - 1, color: isRed ? '#c0392b' : '#1a1a2e', lineHeight: 1 }}>{card.suit}</div>
+            <div style={{ fontSize: s.rank, fontWeight: 800, color: isRed ? '#c0392b' : '#111827', lineHeight: 1, fontFamily: 'Cinzel, serif' }}>{card.rank}</div>
+            <div style={{ fontSize: s.suit - 1, color: isRed ? '#c0392b' : '#111827', lineHeight: 1 }}>{card.suit}</div>
           </div>
         </>
       )}
       {selected && (
-        <div style={{ position: 'absolute', inset: 0, background: 'rgba(241,196,15,0.08)', borderRadius: 7, pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'rgba(241,196,15,0.1)', borderRadius: 9, pointerEvents: 'none' }} />
       )}
     </motion.div>
   )
@@ -192,84 +255,166 @@ function CardFace({ card, size = 'md', glow = false, selected = false, onClick, 
 
 /* ── Card back ── */
 function CardBack({ size = 'md', highlighted = false, selected = false, onClick, canClick = false }) {
-  const sizes = { sm: { w: 36, h: 52 }, md: { w: 48, h: 68 }, lg: { w: 60, h: 84 } }
+  const sizes = { sm: { w: 38, h: 54 }, md: { w: 50, h: 72 }, lg: { w: 64, h: 88 } }
   const s = sizes[size]
   return (
     <motion.div
       onClick={canClick ? onClick : undefined}
-      whileHover={canClick ? { y: -14, scale: 1.1 } : {}}
-      whileTap={canClick ? { scale: 0.95 } : {}}
+      className={canClick ? 'neighbor-card-hover' : ''}
+      whileTap={canClick ? { scale: 0.93 } : {}}
       style={{
-        width: s.w, height: s.h, borderRadius: 8, flexShrink: 0,
-        background: 'linear-gradient(135deg,#1a0a2e,#2d1060,#1a0a2e)',
-        border: selected ? '2px solid #F1C40F' : highlighted ? '1px solid rgba(192,57,43,0.6)' : '1px solid rgba(142,68,173,0.4)',
+        width: s.w, height: s.h, borderRadius: 10, flexShrink: 0,
+        background: selected
+          ? 'linear-gradient(145deg, #2a0a50, #4a1a80, #2a0a50)'
+          : 'linear-gradient(145deg, #140830, #26105a, #1c0c40)',
+        border: selected ? '2px solid #F1C40F' : highlighted ? '1.5px solid rgba(200,60,60,0.7)' : '1px solid rgba(120,60,200,0.4)',
         boxShadow: selected
-          ? '0 0 22px rgba(241,196,15,0.9), 0 8px 20px rgba(0,0,0,0.7)'
-          : highlighted ? '0 0 16px rgba(192,57,43,0.5), 0 6px 16px rgba(0,0,0,0.6)' : '0 4px 12px rgba(0,0,0,0.5)',
+          ? '0 0 28px rgba(241,196,15,1), 0 0 60px rgba(241,196,15,0.4), 0 10px 24px rgba(0,0,0,0.8)'
+          : highlighted ? '0 0 18px rgba(200,60,60,0.5), 0 6px 18px rgba(0,0,0,0.7)' : '0 4px 16px rgba(0,0,0,0.6)',
         cursor: canClick ? 'pointer' : 'default',
-        display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden',
-        transition: 'box-shadow 0.2s',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        position: 'relative', overflow: 'hidden',
+        transition: 'box-shadow 0.2s, transform 0.18s cubic-bezier(0.34,1.56,0.64,1)',
       }}
     >
+      {/* Ornate back pattern */}
       <div style={{
-        position: 'absolute', inset: 4, borderRadius: 5,
-        border: '1px solid rgba(241,196,15,0.25)',
-        background: 'repeating-linear-gradient(45deg,rgba(241,196,15,0.04) 0px,rgba(241,196,15,0.04) 2px,transparent 2px,transparent 8px)',
+        position: 'absolute', inset: 5, borderRadius: 6,
+        border: '1px solid rgba(241,196,15,0.3)',
       }} />
-      <span style={{ fontSize: 14, position: 'relative', zIndex: 1, opacity: 0.6 }}>🃏</span>
-      {selected && <div style={{ position: 'absolute', inset: 0, background: 'rgba(241,196,15,0.1)', borderRadius: 7 }} />}
+      <div style={{
+        position: 'absolute', inset: 8, borderRadius: 4,
+        background: 'repeating-linear-gradient(45deg, rgba(241,196,15,0.05) 0px, rgba(241,196,15,0.05) 2px, transparent 2px, transparent 8px)',
+      }} />
+      {/* Center diamond */}
+      <div style={{
+        width: 20, height: 20, border: '1px solid rgba(241,196,15,0.4)',
+        transform: 'rotate(45deg)', position: 'relative', zIndex: 1,
+        background: 'rgba(241,196,15,0.05)',
+      }}>
+        <div style={{
+          position: 'absolute', inset: 3,
+          border: '1px solid rgba(241,196,15,0.3)',
+          background: 'rgba(241,196,15,0.03)',
+        }} />
+      </div>
+      {selected && <div style={{ position: 'absolute', inset: 0, background: 'rgba(241,196,15,0.12)', borderRadius: 9 }} />}
+      {highlighted && !selected && (
+        <div style={{
+          position: 'absolute', inset: 0, borderRadius: 9,
+          background: 'linear-gradient(135deg, rgba(200,60,60,0.08), transparent)',
+        }} />
+      )}
     </motion.div>
   )
 }
 
-/* ── Bot player card ── */
-function BotPlayer({ player, isCurrent }) {
+/* ── Bot player ── */
+function BotPlayer({ player, isCurrent, position }) {
+  const avatars = ['🤖', '👾', '🎭', '🦇']
+  const avatar = avatars[player.id % avatars.length]
+
   return (
     <motion.div
       animate={{
-        boxShadow: isCurrent ? '0 0 30px rgba(241,196,15,0.6)' : '0 0 0 rgba(0,0,0,0)',
-        borderColor: isCurrent ? 'rgba(241,196,15,0.7)' : 'rgba(241,196,15,0.15)',
+        boxShadow: isCurrent
+          ? '0 0 40px rgba(241,196,15,0.5), 0 0 80px rgba(241,196,15,0.15), inset 0 0 20px rgba(241,196,15,0.05)'
+          : '0 4px 20px rgba(0,0,0,0.5)',
+        borderColor: isCurrent ? 'rgba(241,196,15,0.8)' : 'rgba(241,196,15,0.12)',
       }}
       transition={{ type: 'spring', stiffness: 200, damping: 20 }}
       style={{
-        borderRadius: 16, padding: '12px 16px', minWidth: 120,
-        background: 'rgba(0,0,0,0.6)', border: '1px solid rgba(241,196,15,0.15)',
-        backdropFilter: 'blur(8px)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+        borderRadius: 18, padding: '14px 18px', minWidth: 130,
+        background: 'linear-gradient(145deg, rgba(5,2,15,0.95), rgba(15,5,35,0.9))',
+        border: '1px solid rgba(241,196,15,0.12)',
+        backdropFilter: 'blur(20px)',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10,
+        position: 'relative', overflow: 'hidden',
       }}
     >
+      {/* Shimmer line top */}
+      {isCurrent && (
+        <motion.div
+          animate={{ x: ['-100%', '200%'] }}
+          transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
+          style={{
+            position: 'absolute', top: 0, left: 0, right: 0, height: 1,
+            background: 'linear-gradient(90deg, transparent, rgba(241,196,15,0.8), transparent)',
+          }}
+        />
+      )}
+
       <div style={{
-        width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: player.out ? 'rgba(255,255,255,0.05)' : isCurrent ? 'linear-gradient(135deg,#5b1fa0,#8e44ad)' : 'rgba(241,196,15,0.1)',
-        border: isCurrent ? '2px solid rgba(241,196,15,0.6)' : '1px solid rgba(241,196,15,0.2)',
-        fontSize: 16, opacity: player.out ? 0.4 : 1,
-        boxShadow: isCurrent ? '0 0 12px rgba(241,196,15,0.4)' : 'none',
+        width: 44, height: 44, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: player.out
+          ? 'rgba(255,255,255,0.04)'
+          : isCurrent
+          ? 'linear-gradient(135deg, rgba(91,31,160,0.6), rgba(142,68,173,0.8))'
+          : 'rgba(241,196,15,0.08)',
+        border: isCurrent ? '2px solid rgba(241,196,15,0.7)' : '1px solid rgba(241,196,15,0.15)',
+        fontSize: 20, opacity: player.out ? 0.35 : 1,
+        boxShadow: isCurrent ? '0 0 20px rgba(241,196,15,0.4), inset 0 0 10px rgba(241,196,15,0.1)' : 'none',
       }}>
-        🤖
+        {player.out ? '😌' : avatar}
       </div>
+
       <div style={{ textAlign: 'center' }}>
-        <p style={{ fontFamily: 'Perpetua, Georgia, serif', fontSize: 13, color: player.out ? 'rgba(241,196,15,0.3)' : '#F1C40F', lineHeight: 1 }}>
+        <p style={{
+          fontFamily: 'Cinzel, Georgia, serif', fontSize: 12, fontWeight: 600,
+          color: player.out ? 'rgba(241,196,15,0.25)' : '#F1C40F',
+          lineHeight: 1, letterSpacing: '0.05em',
+        }}>
           {player.name}
         </p>
-        {player.out && <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginTop: 2 }}>Selamat!</p>}
+        {player.out && (
+          <motion.p
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            style={{ fontSize: 9, color: 'rgba(39,174,96,0.7)', marginTop: 3, letterSpacing: '0.15em', textTransform: 'uppercase' }}
+          >
+            ✓ Selamat
+          </motion.p>
+        )}
         {isCurrent && !player.out && (
-          <motion.p animate={{ opacity: [1, 0.4, 1] }} transition={{ duration: 1, repeat: Infinity }}
-            style={{ fontSize: 10, color: 'rgba(241,196,15,0.8)', marginTop: 2 }}>Berpikir...</motion.p>
+          <motion.div
+            animate={{ opacity: [1, 0.3, 1] }}
+            transition={{ duration: 0.8, repeat: Infinity }}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3, marginTop: 4 }}
+          >
+            {[0,1,2].map(i => (
+              <motion.div key={i}
+                animate={{ y: [0, -3, 0] }}
+                transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.15 }}
+                style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(241,196,15,0.7)' }}
+              />
+            ))}
+          </motion.div>
         )}
       </div>
+
       {!player.out && player.hand.length > 0 && (
-        <div style={{ display: 'flex', justifyContent: 'center' }}>
-          {player.hand.slice(0, 7).map((_, idx) => (
-            <div key={idx} style={{ marginLeft: idx === 0 ? 0 : -14 }}>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-end' }}>
+          {player.hand.slice(0, 6).map((_, idx) => (
+            <div key={idx} style={{
+              marginLeft: idx === 0 ? 0 : -16,
+              transform: `rotate(${(idx - 2.5) * 4}deg)`,
+              transformOrigin: 'bottom center',
+            }}>
               <CardBack size="sm" highlighted={isCurrent} />
             </div>
           ))}
-          {player.hand.length > 7 && (
-            <span style={{ fontSize: 9, color: 'rgba(241,196,15,0.5)', marginLeft: 4, alignSelf: 'center' }}>+{player.hand.length - 7}</span>
+          {player.hand.length > 6 && (
+            <span style={{ fontSize: 9, color: 'rgba(241,196,15,0.4)', marginLeft: 5, alignSelf: 'center' }}>+{player.hand.length - 6}</span>
           )}
         </div>
       )}
       {!player.out && (
-        <p style={{ fontSize: 10, color: 'rgba(241,196,15,0.5)' }}>{player.hand.length} kartu</p>
+        <div style={{
+          borderRadius: 20, padding: '2px 10px',
+          background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(241,196,15,0.1)',
+        }}>
+          <p style={{ fontSize: 9, color: 'rgba(241,196,15,0.45)', letterSpacing: '0.1em' }}>{player.hand.length} KARTU</p>
+        </div>
       )}
     </motion.div>
   )
@@ -301,7 +446,6 @@ export function GamePage() {
   }, [state.status, user])
 
   const [selectedIndex, setSelectedIndex] = useState(null)
-  // handOrder tracks the display order of player 0's cards by card id
   const [handOrder, setHandOrder] = useState(null)
 
   useEffect(() => {
@@ -309,7 +453,6 @@ export function GamePage() {
     return () => clearTimeout(id)
   }, [])
 
-  // Sync handOrder when hand changes (new card added) — preserve existing order, append new card
   const prevHandRef = useRef([])
   useEffect(() => {
     const hand = state.players[0]?.hand || []
@@ -320,12 +463,9 @@ export function GamePage() {
     }
     const prevIds = prevHandRef.current
     const newIds = hand.map(c => c.id)
-    // Find cards added
     const added = newIds.filter(id => !prevIds.includes(id))
-    // Find cards removed
     const removed = prevIds.filter(id => !newIds.includes(id))
     if (added.length > 0 || removed.length > 0) {
-      // Keep existing order, remove gone cards, append new cards
       let updated = handOrder.filter(id => newIds.includes(id))
       added.forEach(id => updated.push(id))
       setHandOrder(updated)
@@ -359,14 +499,12 @@ export function GamePage() {
 
   const handleConfirmDraw = () => {
     if (state.status !== 'playing' || !currentPlayer || currentPlayer.id !== 0 || selectedIndex == null) return
-    // Insert new card at position selectedIndex in current hand order
     dispatch({ type: 'DRAW', index: selectedIndex, insertAt: selectedIndex })
     setSelectedIndex(null)
   }
 
   const handleShuffle = () => {
     dispatch({ type: 'SHUFFLE_HAND' })
-    // Also shuffle handOrder
     const hand = state.players[0]?.hand || []
     const shuffled = shuffle(hand)
     setHandOrder(shuffled.map(c => c.id))
@@ -383,291 +521,562 @@ export function GamePage() {
 
   const isMyTurn = state.status === 'playing' && currentPlayer?.id === 0
 
-  // Get display hand in correct order
   const hand0 = state.players[0]?.hand || []
   const displayHand = handOrder
     ? handOrder.map(id => hand0.find(c => c.id === id)).filter(Boolean)
     : hand0
 
   return (
-    <section style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 16, minHeight: 500 }}>
+    <>
+      <style>{styles}</style>
+      <section style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 0, minHeight: 500 }}>
 
-      {/* Background felt table */}
-      <div style={{
-        position: 'absolute', inset: 0, borderRadius: 16, overflow: 'hidden', pointerEvents: 'none', zIndex: 0,
-        background: 'radial-gradient(ellipse at 50% 50%,rgba(10,40,20,0.9) 0%,rgba(5,20,10,0.95) 60%,rgba(0,0,0,0.98) 100%)',
-      }}>
-        <div style={{ position: 'absolute', inset: 0, opacity: 0.04,
-          backgroundImage: 'repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,0.5) 2px,rgba(255,255,255,0.5) 3px),repeating-linear-gradient(90deg,transparent,transparent 2px,rgba(255,255,255,0.5) 2px,rgba(255,255,255,0.5) 3px)' }} />
-        <div style={{ position: 'absolute', inset: 12, borderRadius: 'inherit', border: '2px solid rgba(241,196,15,0.12)', boxShadow: 'inset 0 0 40px rgba(0,0,0,0.5)' }} />
-        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 50% 40%,rgba(20,80,40,0.3) 0%,transparent 65%)' }} />
-      </div>
-
-      {/* Shuffling overlay */}
-      <AnimatePresence>
-        {shuffling && (
-          <motion.div style={{ position: 'absolute', inset: 0, zIndex: 30, borderRadius: 16, background: 'rgba(0,0,0,0.92)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20 }}
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <div style={{ position: 'relative', width: 200, height: 100 }}>
-              {[0,1,2,3,4].map((i) => (
-                <motion.div key={i}
-                  style={{ position: 'absolute', left: '50%', top: '50%', width: 48, height: 68, borderRadius: 8,
-                    background: 'linear-gradient(135deg,#1a0a2e,#2d1060)', border: '1px solid rgba(241,196,15,0.4)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}
-                  initial={{ rotate: -20 + i * 10, x: -24 + (-60 + i * 30), y: -34, opacity: 0 }}
-                  animate={{ rotate: [-20 + i * 10, 10 - i * 5, -10 + i * 8], x: [-24 + (-60 + i * 30), -24, -24 + (-10 + i * 5)], opacity: [0, 1, 1] }}
-                  transition={{ duration: 1.2, repeat: Infinity, repeatType: 'mirror', delay: i * 0.06 }}>
-                  🃏
-                </motion.div>
-              ))}
-            </div>
-            <p style={{ fontFamily: 'Perpetua, Georgia, serif', fontSize: 18, color: '#F1C40F', textShadow: '0 0 12px rgba(241,196,15,0.5)', letterSpacing: '0.2em' }}>
-              Mengocok Kartu...
-            </p>
-            <div style={{ display: 'flex', gap: 6 }}>
-              {[0,1,2].map(i => (
-                <motion.div key={i} animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1, repeat: Infinity, delay: i * 0.3 }}
-                  style={{ width: 6, height: 6, borderRadius: '50%', background: '#F1C40F' }} />
-              ))}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* PAIR animation */}
-      <AnimatePresence>
-        {isPairForUser && (
-          <motion.div style={{ position: 'absolute', inset: 0, zIndex: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <motion.div initial={{ scale: 0.7 }} animate={{ scale: 1 }} exit={{ scale: 0.7 }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-              <div style={{ display: 'flex', gap: 8 }}>
-                {[0, 1].map(i => (
-                  <motion.div key={i} animate={{ x: i === 0 ? [-6, 6, 0] : [6, -6, 0], y: [0, -8, 0] }} transition={{ duration: 0.5 }}
-                    style={{ width: 52, height: 72, borderRadius: 8, background: 'linear-gradient(160deg,#fdfaf0,#f5f0e0)', border: '2px solid #F1C40F',
-                      boxShadow: '0 0 24px rgba(241,196,15,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontFamily: 'Perpetua,Georgia,serif', fontSize: 22, fontWeight: 700, color: '#c0392b' }}>
-                    {state.pairInfo?.rank}
-                  </motion.div>
-                ))}
-              </div>
-              <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
-                style={{ borderRadius: 9999, padding: '6px 20px', background: 'rgba(0,0,0,0.85)', border: '1px solid rgba(241,196,15,0.5)',
-                  fontSize: 13, fontWeight: 700, color: '#F1C40F', letterSpacing: '0.15em', boxShadow: '0 0 16px rgba(241,196,15,0.4)' }}>
-                ✨ PASANGAN DITEMUKAN!
-              </motion.div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* JOKER animation */}
-      <AnimatePresence>
-        {isJokerForUser && (
-          <motion.div style={{ position: 'absolute', inset: 0, zIndex: 30, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <div style={{ position: 'absolute', inset: 0, background: 'rgba(192,57,43,0.12)', borderRadius: 16 }} />
-            <motion.div initial={{ scale: 0.7, rotate: -10 }} animate={{ scale: 1, rotate: 0 }} exit={{ scale: 0.7 }}
-              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, position: 'relative', zIndex: 1 }}>
-              <motion.div animate={{ rotate: [-3, 3, -3], y: [0, -6, 0] }} transition={{ duration: 0.8, repeat: 2 }}
-                style={{ width: 80, height: 112, borderRadius: 12, background: 'linear-gradient(135deg,#1a0030,#3d0060)',
-                  border: '2px solid #e74c3c', boxShadow: '0 0 50px rgba(192,57,43,0.9), 0 0 100px rgba(192,57,43,0.4)',
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                <span style={{ fontSize: 36 }}>🃏</span>
-                <span style={{ fontSize: 11, color: '#F1C40F', letterSpacing: '0.25em', textTransform: 'uppercase' }}>Joker</span>
-              </motion.div>
-              <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
-                style={{ borderRadius: 9999, padding: '8px 24px', background: 'rgba(0,0,0,0.9)', border: '1px solid rgba(192,57,43,0.6)',
-                  fontSize: 14, fontWeight: 700, color: '#e74c3c', letterSpacing: '0.1em', boxShadow: '0 0 20px rgba(192,57,43,0.5)' }}>
-                😈 KAMU DAPAT JOKER!
-              </motion.div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* CONTENT */}
-      <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: 16 }}>
-
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-          <div>
-            <h1 style={{ fontFamily: 'Perpetua,Georgia,serif', fontSize: 28, color: '#F1C40F', textShadow: '0 0 16px rgba(241,196,15,0.4)', lineHeight: 1 }}>
-              Kartu Batak
-            </h1>
-            <p style={{ fontSize: 11, color: 'rgba(241,196,15,0.5)', marginTop: 2 }}>Hindari menjadi pemegang Joker terakhir.</p>
-          </div>
-          <AnimatePresence mode="wait">
-            <motion.div key={currentPlayer?.id ?? 'idle'}
-              initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }}
-              style={{
-                borderRadius: 9999, padding: '6px 16px', fontSize: 12, fontWeight: 600,
-                background: isMyTurn ? 'rgba(241,196,15,0.15)' : 'rgba(0,0,0,0.4)',
-                border: isMyTurn ? '1px solid rgba(241,196,15,0.4)' : '1px solid rgba(255,255,255,0.1)',
-                color: isMyTurn ? '#F1C40F' : 'rgba(255,255,255,0.5)',
-                boxShadow: isMyTurn ? '0 0 12px rgba(241,196,15,0.3)' : 'none',
-              }}>
-              {state.status === 'finished' ? '🏁 Permainan Selesai'
-                : isMyTurn ? '⚡ Giliranmu — Ambil 1 kartu!'
-                : currentPlayer ? `⏳ Giliran ${currentPlayer.name}...` : ''}
-            </motion.div>
-          </AnimatePresence>
-        </div>
-
-        {/* Bots row */}
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
-          {state.players.filter((p) => p.id !== 0).map((p) => (
-            <BotPlayer key={p.id} player={p} isCurrent={currentPlayer?.id === p.id} />
+        {/* ── Rich table background ── */}
+        <div style={{
+          position: 'absolute', inset: 0, borderRadius: 20, overflow: 'hidden', pointerEvents: 'none', zIndex: 0,
+          background: 'radial-gradient(ellipse at 30% 30%, rgba(20,60,30,0.95) 0%, rgba(8,30,15,0.98) 50%, rgba(0,0,0,1) 100%)',
+        }}>
+          {/* Felt texture */}
+          <div style={{
+            position: 'absolute', inset: 0, opacity: 0.06,
+            backgroundImage: `
+              radial-gradient(circle at 50% 50%, rgba(255,255,255,0.1) 1px, transparent 1px),
+              radial-gradient(circle at 0% 0%, rgba(255,255,255,0.05) 1px, transparent 1px)
+            `,
+            backgroundSize: '12px 12px, 6px 6px',
+          }} />
+          {/* Table border glow */}
+          <div style={{
+            position: 'absolute', inset: 10, borderRadius: 14,
+            border: '2px solid rgba(241,196,15,0.18)',
+            boxShadow: 'inset 0 0 60px rgba(0,0,0,0.7), inset 0 0 120px rgba(0,0,0,0.4)',
+          }} />
+          <div style={{
+            position: 'absolute', inset: 14, borderRadius: 12,
+            border: '1px solid rgba(241,196,15,0.07)',
+          }} />
+          {/* Center glow orb */}
+          <div style={{
+            position: 'absolute', top: '40%', left: '50%',
+            transform: 'translate(-50%,-50%)',
+            width: 400, height: 300,
+            background: 'radial-gradient(ellipse, rgba(30,100,50,0.25) 0%, transparent 70%)',
+            animation: 'orbFloat 6s ease-in-out infinite',
+          }} />
+          {/* Corner ornaments */}
+          {[
+            { top: 18, left: 18 }, { top: 18, right: 18 },
+            { bottom: 18, left: 18 }, { bottom: 18, right: 18 },
+          ].map((pos, i) => (
+            <div key={i} style={{
+              position: 'absolute', ...pos,
+              width: 24, height: 24, opacity: 0.25,
+              background: `
+                linear-gradient(45deg, transparent 40%, rgba(241,196,15,0.8) 40%, rgba(241,196,15,0.8) 60%, transparent 60%),
+                linear-gradient(-45deg, transparent 40%, rgba(241,196,15,0.8) 40%, rgba(241,196,15,0.8) 60%, transparent 60%)
+              `,
+            }} />
           ))}
         </div>
 
-        <div style={{ height: 1, background: 'linear-gradient(90deg,transparent,rgba(241,196,15,0.2),transparent)', margin: '0 24px' }} />
-
-        {/* Neighbor cards pick area */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
-          <p style={{ fontFamily: 'Perpetua,Georgia,serif', fontSize: 14, color: 'rgba(241,196,15,0.7)' }}>
-            {isMyTurn ? '👇 Pilih 1 kartu dari pemain sebelah kanan' : 'Kartu pemain sebelah kanan'}
-          </p>
-          <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: 0 }}>
-            {neighborPlayer && neighborPlayer.hand.map((_, idx) => {
-              const isSelected = selectedIndex === idx
-              return (
-                <div key={`${neighborPlayer.id}-${idx}`} style={{ marginLeft: idx === 0 ? 0 : -10 }}>
-                  <CardBack size="md" selected={isSelected} canClick={isMyTurn}
-                    highlighted={isMyTurn} onClick={() => isMyTurn && setSelectedIndex(idx)} />
+        {/* ── Shuffling overlay ── */}
+        <AnimatePresence>
+          {shuffling && (
+            <motion.div
+              style={{
+                position: 'absolute', inset: 0, zIndex: 30, borderRadius: 20,
+                background: 'rgba(0,0,0,0.96)',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 28,
+              }}
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: 0.5 } }}
+            >
+              <div style={{ position: 'relative', width: 220, height: 120 }}>
+                {[0,1,2,3,4].map((i) => (
+                  <motion.div key={i}
+                    style={{
+                      position: 'absolute', left: '50%', top: '50%',
+                      width: 52, height: 74, borderRadius: 10,
+                      background: 'linear-gradient(145deg, #140830, #26105a)',
+                      border: '1px solid rgba(241,196,15,0.5)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22,
+                      boxShadow: '0 8px 20px rgba(0,0,0,0.8)',
+                    }}
+                    initial={{ rotate: -20 + i * 10, x: -26 + (-60 + i * 30), y: -37, opacity: 0 }}
+                    animate={{
+                      rotate: [-20 + i * 10, 15 - i * 6, -8 + i * 8],
+                      x: [-26 + (-60 + i * 30), -26, -26 + (-12 + i * 6)],
+                      opacity: [0, 1, 1],
+                    }}
+                    transition={{ duration: 1.3, repeat: Infinity, repeatType: 'mirror', delay: i * 0.07 }}
+                  >
+                    🃏
+                  </motion.div>
+                ))}
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <p style={{
+                  fontFamily: 'Cinzel Decorative, Georgia, serif',
+                  fontSize: 20, color: '#F1C40F',
+                  textShadow: '0 0 20px rgba(241,196,15,0.6), 0 0 40px rgba(241,196,15,0.2)',
+                  letterSpacing: '0.3em', marginBottom: 16,
+                }}>
+                  Mengocok Kartu
+                </p>
+                <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+                  {[0,1,2,3].map(i => (
+                    <motion.div key={i}
+                      animate={{ scale: [1, 1.5, 1], opacity: [0.3, 1, 0.3] }}
+                      transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }}
+                      style={{ width: 5, height: 5, borderRadius: '50%', background: '#F1C40F' }}
+                    />
+                  ))}
                 </div>
-              )
-            })}
-            {!neighborPlayer && (
-              <p style={{ fontSize: 12, color: 'rgba(241,196,15,0.4)' }}>Tidak ada pemain aktif di kanan.</p>
-            )}
-          </div>
-          {selectedIndex != null && (
-            <motion.p initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
-              style={{ fontSize: 11, color: 'rgba(241,196,15,0.7)' }}>
-              Kartu #{selectedIndex + 1} dipilih — klik Ambil untuk konfirmasi
-            </motion.p>
+              </div>
+            </motion.div>
           )}
-        </div>
+        </AnimatePresence>
 
-        <div style={{ height: 1, background: 'linear-gradient(90deg,transparent,rgba(241,196,15,0.2),transparent)', margin: '0 24px' }} />
+        {/* ── PAIR animation ── */}
+        <AnimatePresence>
+          {isPairForUser && (
+            <motion.div
+              style={{ position: 'absolute', inset: 0, zIndex: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            >
+              <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at center, rgba(241,196,15,0.08), transparent 70%)', borderRadius: 20 }} />
+              <motion.div initial={{ scale: 0.5, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.5, y: 20 }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  {[0, 1].map(i => (
+                    <motion.div key={i}
+                      animate={{ x: i === 0 ? [-8, 8, 0] : [8, -8, 0], y: [0, -12, 0], rotate: i === 0 ? [-5, 5, 0] : [5, -5, 0] }}
+                      transition={{ duration: 0.6 }}
+                      style={{
+                        width: 58, height: 80, borderRadius: 10,
+                        background: 'linear-gradient(160deg, #fffef5, #fff0b0)',
+                        border: '2.5px solid #F1C40F',
+                        boxShadow: '0 0 30px rgba(241,196,15,0.9), 0 0 60px rgba(241,196,15,0.3)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontFamily: 'Cinzel, serif', fontSize: 26, fontWeight: 900, color: '#c0392b',
+                      }}>
+                      {state.pairInfo?.rank}
+                    </motion.div>
+                  ))}
+                </div>
+                <motion.div
+                  initial={{ y: 12, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
+                  style={{
+                    borderRadius: 9999, padding: '8px 24px',
+                    background: 'linear-gradient(135deg, rgba(0,0,0,0.95), rgba(20,15,0,0.95))',
+                    border: '1px solid rgba(241,196,15,0.6)',
+                    fontSize: 13, fontWeight: 700, color: '#F1C40F',
+                    letterSpacing: '0.2em', fontFamily: 'Cinzel, serif',
+                    boxShadow: '0 0 24px rgba(241,196,15,0.4)',
+                  }}>
+                  ✨ PASANGAN!
+                </motion.div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        {/* Player's hand */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
-            <p style={{ fontFamily: 'Perpetua,Georgia,serif', fontSize: 14, color: '#F1C40F' }}>
-              🃏 Kartu Kamu ({hand0.length})
-            </p>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <motion.button type="button"
-                onClick={handleShuffle}
-                whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-                style={{
-                  borderRadius: 9999, padding: '8px 16px', fontSize: 13, fontWeight: 700, border: '1px solid rgba(241,196,15,0.3)',
-                  background: 'rgba(241,196,15,0.08)', color: 'rgba(241,196,15,0.8)', cursor: 'pointer',
+        {/* ── JOKER animation ── */}
+        <AnimatePresence>
+          {isJokerForUser && (
+            <motion.div
+              style={{ position: 'absolute', inset: 0, zIndex: 30, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            >
+              <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at center, rgba(192,57,43,0.15), transparent 65%)', borderRadius: 20 }} />
+              {/* Scan line effect */}
+              <motion.div
+                animate={{ y: ['-100%', '200%'] }}
+                transition={{ duration: 1.5, repeat: 2 }}
+                style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 40%, rgba(192,57,43,0.08) 50%, transparent 60%)', pointerEvents: 'none' }}
+              />
+              <motion.div
+                initial={{ scale: 0.6, rotate: -15 }} animate={{ scale: 1, rotate: 0 }} exit={{ scale: 0.6 }}
+                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 18, position: 'relative', zIndex: 1 }}
+              >
+                <motion.div
+                  animate={{ rotate: [-4, 4, -4], y: [0, -8, 0] }}
+                  transition={{ duration: 0.9, repeat: 3 }}
+                  style={{
+                    width: 88, height: 124, borderRadius: 14,
+                    background: 'linear-gradient(145deg, #0d0020, #2a0050)',
+                    border: '2.5px solid #e74c3c',
+                    boxShadow: '0 0 60px rgba(192,57,43,1), 0 0 120px rgba(192,57,43,0.4), inset 0 0 30px rgba(192,57,43,0.2)',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8,
+                  }}>
+                  <span style={{ fontSize: 42, filter: 'drop-shadow(0 0 12px rgba(255,80,80,0.9))' }}>🃏</span>
+                  <span style={{ fontSize: 10, color: '#F1C40F', letterSpacing: '0.3em', fontFamily: 'Cinzel, serif', textTransform: 'uppercase' }}>Joker</span>
+                </motion.div>
+                <motion.div
+                  initial={{ y: 14, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
+                  style={{
+                    borderRadius: 9999, padding: '10px 28px',
+                    background: 'linear-gradient(135deg, rgba(0,0,0,0.97), rgba(30,5,5,0.97))',
+                    border: '1px solid rgba(192,57,43,0.7)',
+                    fontSize: 14, fontWeight: 700, color: '#e74c3c',
+                    letterSpacing: '0.15em', fontFamily: 'Cinzel, serif',
+                    boxShadow: '0 0 28px rgba(192,57,43,0.5)',
+                  }}>
+                  😈 DAPAT JOKER!
+                </motion.div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ── CONTENT ── */}
+        <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: 18, padding: '20px 24px' }}>
+
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+                <h1 style={{
+                  fontFamily: 'Cinzel Decorative, Georgia, serif',
+                  fontSize: 26, color: '#F1C40F',
+                  textShadow: '0 0 20px rgba(241,196,15,0.5), 0 0 40px rgba(241,196,15,0.2)',
+                  lineHeight: 1, margin: 0, letterSpacing: '0.05em',
                 }}>
-                🔀 Kocok
-              </motion.button>
-              <motion.button type="button" onClick={handleConfirmDraw}
-                disabled={!isMyTurn || selectedIndex == null || shuffling}
-                whileHover={isMyTurn && selectedIndex != null ? { scale: 1.05 } : {}}
-                whileTap={isMyTurn && selectedIndex != null ? { scale: 0.95 } : {}}
+                  Kartu Batak
+                </h1>
+                <span style={{ fontSize: 9, color: 'rgba(241,196,15,0.3)', letterSpacing: '0.25em', textTransform: 'uppercase', fontFamily: 'Cinzel, serif' }}>Solo</span>
+              </div>
+              <p style={{ fontSize: 10, color: 'rgba(241,196,15,0.4)', marginTop: 4, letterSpacing: '0.1em' }}>
+                Hindari menjadi pemegang Joker terakhir
+              </p>
+            </div>
+
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentPlayer?.id ?? 'idle'}
+                initial={{ opacity: 0, x: 10, scale: 0.9 }} animate={{ opacity: 1, x: 0, scale: 1 }} exit={{ opacity: 0, x: -10 }}
                 style={{
-                  borderRadius: 9999, padding: '8px 24px', fontSize: 13, fontWeight: 700, border: 'none',
-                  background: isMyTurn && selectedIndex != null ? 'linear-gradient(135deg,#a93226,#e74c3c)' : 'rgba(255,255,255,0.06)',
-                  color: isMyTurn && selectedIndex != null ? '#fff' : 'rgba(255,255,255,0.25)',
-                  boxShadow: isMyTurn && selectedIndex != null ? '0 0 20px rgba(192,57,43,0.6)' : 'none',
-                  cursor: isMyTurn && selectedIndex != null ? 'pointer' : 'not-allowed',
-                  transition: 'all 0.2s', letterSpacing: '0.08em',
+                  borderRadius: 12, padding: '8px 18px', fontSize: 12, fontWeight: 700,
+                  background: isMyTurn
+                    ? 'linear-gradient(135deg, rgba(241,196,15,0.15), rgba(241,196,15,0.05))'
+                    : 'rgba(0,0,0,0.5)',
+                  border: isMyTurn
+                    ? '1px solid rgba(241,196,15,0.5)'
+                    : '1px solid rgba(255,255,255,0.07)',
+                  color: isMyTurn ? '#F1C40F' : 'rgba(255,255,255,0.35)',
+                  boxShadow: isMyTurn ? '0 0 20px rgba(241,196,15,0.2)' : 'none',
+                  fontFamily: 'Cinzel, serif',
+                  letterSpacing: '0.05em',
+                  animation: isMyTurn ? 'turnIndicator 1.5s ease-in-out infinite' : 'none',
                 }}>
-                Ambil Kartu →
-              </motion.button>
+                {state.status === 'finished' ? '🏁 Game Selesai'
+                  : isMyTurn ? '⚡ Giliranmu!'
+                  : currentPlayer ? `⏳ ${currentPlayer.name}...` : ''}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          {/* Divider */}
+          <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, rgba(241,196,15,0.3), rgba(241,196,15,0.1), transparent)' }} />
+
+          {/* Bots row */}
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
+            {state.players.filter((p) => p.id !== 0).map((p) => (
+              <BotPlayer key={p.id} player={p} isCurrent={currentPlayer?.id === p.id} />
+            ))}
+          </div>
+
+          {/* Section label */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ flex: 1, height: 1, background: 'linear-gradient(90deg, transparent, rgba(241,196,15,0.15))' }} />
+            <span style={{ fontSize: 9, color: 'rgba(241,196,15,0.3)', letterSpacing: '0.3em', textTransform: 'uppercase', fontFamily: 'Cinzel, serif' }}>Meja Permainan</span>
+            <div style={{ flex: 1, height: 1, background: 'linear-gradient(90deg, rgba(241,196,15,0.15), transparent)' }} />
+          </div>
+
+          {/* Neighbor cards pick area */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              borderRadius: 9999, padding: '5px 16px',
+              background: isMyTurn ? 'rgba(241,196,15,0.06)' : 'rgba(0,0,0,0.3)',
+              border: isMyTurn ? '1px solid rgba(241,196,15,0.2)' : '1px solid rgba(255,255,255,0.05)',
+            }}>
+              <span style={{ fontSize: 10 }}>{isMyTurn ? '👇' : '🂠'}</span>
+              <p style={{ fontFamily: 'Cinzel, serif', fontSize: 11, color: isMyTurn ? 'rgba(241,196,15,0.8)' : 'rgba(241,196,15,0.4)', letterSpacing: '0.08em', margin: 0 }}>
+                {isMyTurn ? 'Pilih 1 kartu dari pemain kanan' : 'Kartu pemain sebelah kanan'}
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: 0, padding: '8px 0' }}>
+              {neighborPlayer && neighborPlayer.hand.map((_, idx) => {
+                const isSelected = selectedIndex === idx
+                return (
+                  <motion.div
+                    key={`${neighborPlayer.id}-${idx}`}
+                    style={{ marginLeft: idx === 0 ? 0 : -12, zIndex: isSelected ? 5 : 1 }}
+                    animate={{ y: isSelected ? -8 : 0 }}
+                  >
+                    <CardBack size="md" selected={isSelected} canClick={isMyTurn}
+                      highlighted={isMyTurn} onClick={() => isMyTurn && setSelectedIndex(idx)} />
+                  </motion.div>
+                )
+              })}
+              {!neighborPlayer && (
+                <p style={{ fontSize: 11, color: 'rgba(241,196,15,0.3)', fontFamily: 'Cinzel, serif' }}>Tidak ada pemain aktif di kanan.</p>
+              )}
+            </div>
+
+            <AnimatePresence>
+              {selectedIndex != null && (
+                <motion.div
+                  initial={{ opacity: 0, y: 6, scale: 0.9 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0 }}
+                  style={{
+                    borderRadius: 9999, padding: '4px 14px',
+                    background: 'rgba(241,196,15,0.1)', border: '1px solid rgba(241,196,15,0.3)',
+                    fontSize: 10, color: '#F1C40F', fontFamily: 'Cinzel, serif', letterSpacing: '0.1em',
+                  }}>
+                  Kartu #{selectedIndex + 1} — klik Ambil untuk konfirmasi
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Section divider */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ flex: 1, height: 1, background: 'linear-gradient(90deg, transparent, rgba(241,196,15,0.15))' }} />
+            <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'rgba(241,196,15,0.3)', transform: 'rotate(45deg)' }} />
+            <div style={{ flex: 1, height: 1, background: 'linear-gradient(90deg, rgba(241,196,15,0.15), transparent)' }} />
+          </div>
+
+          {/* Player hand */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontSize: 14 }}>🃏</span>
+                <p style={{ fontFamily: 'Cinzel, serif', fontSize: 13, color: '#F1C40F', margin: 0, letterSpacing: '0.05em' }}>
+                  Kartu Kamu
+                </p>
+                <div style={{
+                  borderRadius: 9999, padding: '1px 8px', minWidth: 24, textAlign: 'center',
+                  background: 'rgba(241,196,15,0.12)', border: '1px solid rgba(241,196,15,0.25)',
+                }}>
+                  <span style={{ fontSize: 10, color: '#F1C40F', fontFamily: 'Cinzel, serif' }}>{hand0.length}</span>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: 8 }}>
+                <motion.button type="button" onClick={handleShuffle}
+                  whileHover={{ scale: 1.05, backgroundColor: 'rgba(241,196,15,0.12)' }}
+                  whileTap={{ scale: 0.95 }}
+                  style={{
+                    borderRadius: 10, padding: '8px 16px', fontSize: 12, fontWeight: 700,
+                    border: '1px solid rgba(241,196,15,0.25)',
+                    background: 'rgba(241,196,15,0.06)', color: 'rgba(241,196,15,0.7)',
+                    cursor: 'pointer', fontFamily: 'Cinzel, serif', letterSpacing: '0.05em',
+                    transition: 'all 0.2s',
+                  }}>
+                  🔀 Kocok
+                </motion.button>
+
+                <motion.button type="button" onClick={handleConfirmDraw}
+                  disabled={!isMyTurn || selectedIndex == null || shuffling}
+                  whileHover={isMyTurn && selectedIndex != null ? { scale: 1.05 } : {}}
+                  whileTap={isMyTurn && selectedIndex != null ? { scale: 0.95 } : {}}
+                  style={{
+                    borderRadius: 10, padding: '8px 22px', fontSize: 12, fontWeight: 700, border: 'none',
+                    background: isMyTurn && selectedIndex != null
+                      ? 'linear-gradient(135deg, #8b1e1e, #c0392b, #e74c3c)'
+                      : 'rgba(255,255,255,0.04)',
+                    color: isMyTurn && selectedIndex != null ? '#fff' : 'rgba(255,255,255,0.2)',
+                    boxShadow: isMyTurn && selectedIndex != null
+                      ? '0 0 24px rgba(192,57,43,0.6), inset 0 1px 0 rgba(255,255,255,0.15)'
+                      : 'none',
+                    cursor: isMyTurn && selectedIndex != null ? 'pointer' : 'not-allowed',
+                    transition: 'all 0.2s', letterSpacing: '0.08em',
+                    fontFamily: 'Cinzel, serif',
+                  }}>
+                  Ambil →
+                </motion.button>
+              </div>
+            </div>
+
+            {/* Hand cards */}
+            <div style={{
+              display: 'flex', flexWrap: 'wrap', gap: 6, padding: '12px 14px',
+              borderRadius: 14,
+              background: 'rgba(0,0,0,0.3)',
+              border: '1px solid rgba(241,196,15,0.07)',
+              minHeight: 100,
+            }}>
+              <AnimatePresence>
+                {displayHand.map((card, i) => (
+                  <motion.div
+                    key={card.id}
+                    initial={{ opacity: 0, y: 20, scale: 0.8 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -10, scale: 0.8 }}
+                    transition={{ delay: i * 0.04 }}
+                  >
+                    <CardFace card={card} size="md" glow={card.rank === 'JOKER'} />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+              {hand0.length === 0 && (
+                <motion.div
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 0' }}
+                >
+                  <span style={{ fontSize: 20 }}>🎉</span>
+                  <p style={{ fontSize: 13, color: 'rgba(39,174,96,0.7)', fontFamily: 'Cinzel, serif', letterSpacing: '0.05em' }}>
+                    Kamu sudah bebas! Menunggu pemain lain...
+                  </p>
+                </motion.div>
+              )}
             </div>
           </div>
-
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-            {displayHand.map((card) => (
-              <CardFace key={card.id} card={card} size="md" glow={card.rank === 'JOKER'} />
-            ))}
-            {hand0.length === 0 && (
-              <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                style={{ fontSize: 13, color: 'rgba(241,196,15,0.5)', padding: '12px 0' }}>
-                🎉 Kamu sudah bebas! Menunggu pemain lain...
-              </motion.p>
-            )}
-          </div>
         </div>
-      </div>
 
-      {/* GAME OVER MODAL */}
-      <AnimatePresence>
-        {state.status === 'finished' && state.loserIndex != null && (
-          <motion.div style={{ position: 'fixed', inset: 0, zIndex: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)' }}
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            {(() => {
-              const loser = state.players[state.loserIndex]
-              const loserIsYou = loser?.id === 0
-              return (
-                <motion.div initial={{ scale: 0.75, y: 30 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.75, y: 30 }}
-                  style={{ width: '100%', maxWidth: 420, borderRadius: 24, padding: 32, textAlign: 'center',
-                    background: 'linear-gradient(160deg,rgba(5,3,1,0.98),rgba(20,10,5,0.98))',
-                    border: loserIsYou ? '1px solid rgba(192,57,43,0.5)' : '1px solid rgba(241,196,15,0.4)',
-                    boxShadow: loserIsYou ? '0 0 60px rgba(192,57,43,0.4)' : '0 0 60px rgba(241,196,15,0.3)' }}>
+        {/* ── GAME OVER MODAL ── */}
+        <AnimatePresence>
+          {state.status === 'finished' && state.loserIndex != null && (
+            <motion.div
+              style={{
+                position: 'fixed', inset: 0, zIndex: 40,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
+                background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(16px)',
+              }}
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            >
+              {/* Background particles */}
+              {[...Array(8)].map((_, i) => (
+                <motion.div key={i}
+                  style={{
+                    position: 'absolute',
+                    left: `${10 + i * 12}%`, bottom: '20%',
+                    width: 3, height: 3, borderRadius: '50%',
+                    background: state.players[state.loserIndex]?.id === 0 ? '#e74c3c' : '#F1C40F',
+                  }}
+                  animate={{ y: [-0, -200], opacity: [1, 0], scale: [1, 0] }}
+                  transition={{ duration: 2 + i * 0.3, repeat: Infinity, delay: i * 0.4 }}
+                />
+              ))}
 
-                  <p style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.35em', color: 'rgba(241,196,15,0.5)', marginBottom: 8 }}>Game Over</p>
+              {(() => {
+                const loser = state.players[state.loserIndex]
+                const loserIsYou = loser?.id === 0
+                return (
+                  <motion.div
+                    initial={{ scale: 0.7, y: 40, opacity: 0 }} animate={{ scale: 1, y: 0, opacity: 1 }}
+                    exit={{ scale: 0.7, y: 40 }}
+                    transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                    style={{
+                      width: '100%', maxWidth: 440, borderRadius: 28, padding: '36px 32px', textAlign: 'center',
+                      background: loserIsYou
+                        ? 'linear-gradient(160deg, rgba(20,3,3,0.99), rgba(35,8,8,0.99))'
+                        : 'linear-gradient(160deg, rgba(3,10,5,0.99), rgba(8,20,12,0.99))',
+                      border: loserIsYou ? '1px solid rgba(200,50,43,0.6)' : '1px solid rgba(241,196,15,0.5)',
+                      boxShadow: loserIsYou
+                        ? '0 0 80px rgba(192,57,43,0.35), inset 0 0 40px rgba(192,57,43,0.05)'
+                        : '0 0 80px rgba(241,196,15,0.25), inset 0 0 40px rgba(241,196,15,0.03)',
+                      position: 'relative', overflow: 'hidden',
+                    }}>
 
-                  <h2 style={{ fontFamily: 'Perpetua,Georgia,serif', fontSize: 32, lineHeight: 1, marginBottom: 8,
-                    color: loserIsYou ? '#e74c3c' : '#F1C40F',
-                    textShadow: loserIsYou ? '0 0 20px rgba(192,57,43,0.7)' : '0 0 20px rgba(241,196,15,0.6)' }}>
-                    {loserIsYou ? 'Kamu Kalah! 😈' : 'Kamu Menang! 🎉'}
-                  </h2>
+                    {/* Top shimmer */}
+                    <motion.div
+                      animate={{ x: ['-100%', '200%'] }}
+                      transition={{ duration: 3, repeat: Infinity, delay: 1 }}
+                      style={{
+                        position: 'absolute', top: 0, left: 0, right: 0, height: 2,
+                        background: loserIsYou
+                          ? 'linear-gradient(90deg, transparent, rgba(192,57,43,0.8), transparent)'
+                          : 'linear-gradient(90deg, transparent, rgba(241,196,15,0.8), transparent)',
+                      }}
+                    />
 
-                  <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginBottom: 24 }}>
-                    {loserIsYou ? 'Kamu adalah pemegang Joker terakhir.' : `${loser?.name} adalah pemegang Joker terakhir.`}
-                  </p>
+                    <p style={{
+                      fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.4em',
+                      color: loserIsYou ? 'rgba(200,50,43,0.5)' : 'rgba(241,196,15,0.4)',
+                      marginBottom: 10, fontFamily: 'Cinzel, serif',
+                    }}>Game Over</p>
 
-                  <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
-                    <motion.div animate={{ rotate: [0, -5, 5, 0], y: [0, -8, 0] }} transition={{ duration: 2, repeat: Infinity }}
-                      style={{ width: 80, height: 112, borderRadius: 12, background: 'linear-gradient(135deg,#1a0030,#3d0060)',
-                        border: '2px solid #e74c3c', boxShadow: '0 0 40px rgba(192,57,43,0.8)',
-                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                      <span style={{ fontSize: 36 }}>🃏</span>
-                      <span style={{ fontSize: 11, color: '#F1C40F', letterSpacing: '0.2em' }}>JOKER</span>
-                    </motion.div>
-                  </div>
+                    <h2 style={{
+                      fontFamily: 'Cinzel Decorative, Georgia, serif',
+                      fontSize: 30, lineHeight: 1.1, marginBottom: 10,
+                      color: loserIsYou ? '#e74c3c' : '#F1C40F',
+                      textShadow: loserIsYou
+                        ? '0 0 24px rgba(192,57,43,0.8), 0 0 50px rgba(192,57,43,0.3)'
+                        : '0 0 24px rgba(241,196,15,0.7), 0 0 50px rgba(241,196,15,0.3)',
+                    }}>
+                      {loserIsYou ? 'Kamu Kalah!' : 'Kamu Menang!'}
+                    </h2>
+                    <p style={{ fontSize: 24, marginBottom: 8 }}>{loserIsYou ? '😈' : '🎉'}</p>
 
-                  <div style={{ display: 'flex', justifyContent: 'center', gap: 12, marginBottom: 24, flexWrap: 'wrap' }}>
-                    {state.players.map(p => (
-                      <div key={p.id} style={{ borderRadius: 12, padding: '8px 14px', textAlign: 'center', minWidth: 70,
-                        background: p.id === state.loserIndex ? 'rgba(192,57,43,0.15)' : 'rgba(241,196,15,0.08)',
-                        border: p.id === state.loserIndex ? '1px solid rgba(192,57,43,0.4)' : '1px solid rgba(241,196,15,0.15)' }}>
-                        <p style={{ fontSize: 11, color: p.id === state.loserIndex ? '#e74c3c' : 'rgba(241,196,15,0.7)', fontWeight: 600 }}>{p.name}</p>
-                        <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>{p.id === state.loserIndex ? '🃏 Kalah' : '✓ Selamat'}</p>
-                      </div>
-                    ))}
-                  </div>
+                    <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginBottom: 24, fontFamily: 'Cinzel, serif', letterSpacing: '0.05em' }}>
+                      {loserIsYou ? 'Kamu adalah pemegang Joker terakhir.' : `${loser?.name} adalah pemegang Joker terakhir.`}
+                    </p>
 
-                  <div style={{ display:'flex',gap:10,justifyContent:'center',flexWrap:'wrap' }}>
-                    <motion.button type="button" onClick={handleRestart}
-                      whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-                      style={{ borderRadius: 9999, padding: '12px 28px', fontSize: 14, fontWeight: 700, border: 'none',
-                        background: 'linear-gradient(135deg,#a93226,#e74c3c)', color: '#fff', cursor: 'pointer',
-                        boxShadow: '0 0 24px rgba(192,57,43,0.6)', letterSpacing: '0.1em' }}>
-                      🔁 Main Lagi
-                    </motion.button>
-                    <motion.button type="button" onClick={() => navigate('/')}
-                      whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-                      style={{ borderRadius: 9999, padding: '12px 28px', fontSize: 14, fontWeight: 700, cursor: 'pointer',
-                        border: '1px solid rgba(241,196,15,0.35)', background: 'rgba(241,196,15,0.08)',
-                        color: 'rgba(241,196,15,0.85)' }}>
-                      🏠 Beranda
-                    </motion.button>
-                  </div>
-                </motion.div>
-              )
-            })()}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </section>
+                    {/* Animated joker card */}
+                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
+                      <motion.div
+                        animate={{ rotate: [0, -6, 6, 0], y: [0, -10, 0] }}
+                        transition={{ duration: 2.5, repeat: Infinity }}
+                        style={{
+                          width: 80, height: 112, borderRadius: 14,
+                          background: 'linear-gradient(145deg, #0d0020, #2a0050)',
+                          border: '2px solid #e74c3c',
+                          boxShadow: '0 0 50px rgba(192,57,43,0.8), 0 0 100px rgba(192,57,43,0.3)',
+                          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6,
+                        }}>
+                        <span style={{ fontSize: 36, filter: 'drop-shadow(0 0 10px rgba(255,80,80,0.8))' }}>🃏</span>
+                        <span style={{ fontSize: 9, color: '#F1C40F', letterSpacing: '0.3em', fontFamily: 'Cinzel, serif' }}>JOKER</span>
+                      </motion.div>
+                    </div>
+
+                    {/* Players summary */}
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 26, flexWrap: 'wrap' }}>
+                      {state.players.map(p => (
+                        <motion.div key={p.id}
+                          initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
+                          style={{
+                            borderRadius: 12, padding: '8px 14px', textAlign: 'center', minWidth: 74,
+                            background: p.id === state.loserIndex ? 'rgba(192,57,43,0.15)' : 'rgba(241,196,15,0.07)',
+                            border: p.id === state.loserIndex ? '1px solid rgba(192,57,43,0.4)' : '1px solid rgba(241,196,15,0.12)',
+                          }}>
+                          <p style={{ fontSize: 10, color: p.id === state.loserIndex ? '#e74c3c' : 'rgba(241,196,15,0.65)', fontWeight: 700, fontFamily: 'Cinzel, serif', margin: 0 }}>{p.name}</p>
+                          <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', marginTop: 3 }}>{p.id === state.loserIndex ? '🃏 Kalah' : '✓ Selamat'}</p>
+                        </motion.div>
+                      ))}
+                    </div>
+
+                    <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+                      <motion.button type="button" onClick={handleRestart}
+                        whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                        style={{
+                          borderRadius: 12, padding: '12px 28px', fontSize: 13, fontWeight: 700, border: 'none',
+                          background: 'linear-gradient(135deg, #7b1515, #a93226, #e74c3c)',
+                          color: '#fff', cursor: 'pointer',
+                          boxShadow: '0 0 28px rgba(192,57,43,0.5), inset 0 1px 0 rgba(255,255,255,0.15)',
+                          fontFamily: 'Cinzel, serif', letterSpacing: '0.08em',
+                        }}>
+                        🔁 Main Lagi
+                      </motion.button>
+                      <motion.button type="button" onClick={() => navigate('/')}
+                        whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                        style={{
+                          borderRadius: 12, padding: '12px 28px', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                          border: '1px solid rgba(241,196,15,0.35)',
+                          background: 'rgba(241,196,15,0.07)',
+                          color: 'rgba(241,196,15,0.8)',
+                          fontFamily: 'Cinzel, serif', letterSpacing: '0.08em',
+                        }}>
+                        🏠 Beranda
+                      </motion.button>
+                    </div>
+                  </motion.div>
+                )
+              })()}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </section>
+    </>
   )
 }
