@@ -168,7 +168,7 @@ export function HomePage() {
               J
             </motion.div>
             <div className="hidden leading-tight sm:block">
-              <p className="font-perpetua text-xl font-semibold" style={{ color: '#F1C40F', textShadow: '0 0 14px rgba(241,196,15,0.6)' }}>Joker Card</p>
+              <p className="font-perpetua text-xl font-semibold" style={{ color: '#F1C40F', textShadow: '0 0 14px rgba(241,196,15,0.6)' }}>Kartu Batak</p>
               <p className="text-[9px] uppercase tracking-[0.3em]" style={{ color: 'rgba(241,196,15,0.4)' }}>Bataker Project</p>
             </div>
           </Link>
@@ -415,7 +415,7 @@ export function HomePage() {
       {/* Footer */}
       <footer className="relative z-20 w-full py-4 text-center text-[10px] tracking-[0.25em]"
         style={{ background: 'rgba(0,0,0,0.75)', borderTop: '1px solid rgba(241,196,15,0.08)', color: 'rgba(241,196,15,0.28)' }}>
-        Joker Card &middot; Bataker Project &middot; 2026
+        Kartu Batak &middot; Bataker Project &middot; 2026
       </footer>
 
       {/* Share modal */}
@@ -428,7 +428,7 @@ export function HomePage() {
               style={{ border: '1px solid rgba(241,196,15,0.35)', background: 'rgba(5,3,1,0.95)', boxShadow: '0 0 40px rgba(241,196,15,0.2)' }}
               initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}>
               <div className="mb-3 flex items-center justify-between">
-                <p className="font-perpetua text-lg" style={{ color: '#F1C40F' }}>Bagikan Joker Card</p>
+                <p className="font-perpetua text-lg" style={{ color: '#F1C40F' }}>Bagikan Kartu Batak</p>
                 <button type="button" onClick={() => setShowShare(false)} style={{ color: 'rgba(241,196,15,0.6)' }}>✕</button>
               </div>
               <p className="mb-3 text-xs" style={{ color: 'rgba(241,196,15,0.5)' }}>Salin link untuk berbagi ke teman.</p>

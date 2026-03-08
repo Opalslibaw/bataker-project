@@ -492,7 +492,7 @@ export function GamePage() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
           <div>
             <h1 style={{ fontFamily: 'Perpetua,Georgia,serif', fontSize: 28, color: '#F1C40F', textShadow: '0 0 16px rgba(241,196,15,0.4)', lineHeight: 1 }}>
-              Joker Card
+              Kartu Batak
             </h1>
             <p style={{ fontSize: 11, color: 'rgba(241,196,15,0.5)', marginTop: 2 }}>Hindari menjadi pemegang Joker terakhir.</p>
           </div>

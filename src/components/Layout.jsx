@@ -114,7 +114,7 @@ export function Layout() {
             </motion.div>
             <div className="hidden leading-tight sm:block">
               <p className="font-perpetua text-xl font-semibold"
-                style={{ color: '#F1C40F', textShadow: '0 0 14px rgba(241,196,15,0.6)' }}>Joker Card</p>
+                style={{ color: '#F1C40F', textShadow: '0 0 14px rgba(241,196,15,0.6)' }}>Kartu Batak</p>
               <p className="text-[9px] uppercase tracking-[0.3em]" style={{ color: 'rgba(241,196,15,0.45)' }}>Bataker Project</p>
             </div>
           </Link>
@@ -233,7 +233,7 @@ export function Layout() {
 
       <footer className="relative z-10 w-full py-3 text-center text-[10px] tracking-[0.25em]"
         style={{ background: 'rgba(0,0,0,0.75)', borderTop: '1px solid rgba(241,196,15,0.08)', color: 'rgba(241,196,15,0.28)' }}>
-        Joker Card &middot; Bataker Project &middot; 2026
+        Kartu Batak &middot; Bataker Project &middot; 2026
       </footer>
       <MusicPlayer />
     </div>

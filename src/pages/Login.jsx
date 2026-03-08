@@ -96,7 +96,7 @@ export function LoginPage() {
               J
             </div>
             <h1 className="font-perpetua text-3xl" style={{ color: '#F1C40F', textShadow: '0 0 14px rgba(241,196,15,0.4)' }}>
-              {mode === 'login' ? 'Masuk' : 'Daftar'} Joker Card
+              {mode === 'login' ? 'Masuk' : 'Daftar'} Kartu Batak
             </h1>
             <p className="mt-1 text-xs" style={{ color: 'rgba(241,196,15,0.5)' }}>
               {mode === 'login' ? 'Masuk untuk mulai bermain.' : 'Buat akun untuk bergabung di meja.'}
@@ -183,7 +183,7 @@ export function LoginPage() {
               }}>
               {authLoading
                 ? (mode === 'login' ? 'Memproses...' : 'Mendaftar...')
-                : (mode === 'login' ? 'Masuk ke Joker Card' : 'Daftar Joker Card')}
+                : (mode === 'login' ? 'Masuk ke Kartu Batak' : 'Daftar Kartu Batak')}
             </motion.button>
           </form>
 
