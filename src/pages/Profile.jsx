@@ -4,22 +4,94 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../hooks/useAuth.jsx'
 import { supabase } from '../lib/supabase.js'
 
+// ── SVG Icons
+const IconCamera = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
+    <circle cx="12" cy="13" r="4"/>
+  </svg>
+)
+
+const IconLogout = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+    <polyline points="16 17 21 12 16 7"/>
+    <line x1="21" y1="12" x2="9" y2="12"/>
+  </svg>
+)
+
+const IconBot = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="11" width="18" height="10" rx="2"/>
+    <circle cx="12" cy="5" r="2"/>
+    <path d="M12 7v4"/>
+    <line x1="8" y1="15" x2="8" y2="17"/>
+    <line x1="16" y1="15" x2="16" y2="17"/>
+  </svg>
+)
+
+const IconGlobe = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10"/>
+    <line x1="2" y1="12" x2="22" y2="12"/>
+    <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
+  </svg>
+)
+
+const IconSpin = () => (
+  <svg className="animate-spin" width="20" height="20" viewBox="0 0 24 24" fill="none">
+    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+  </svg>
+)
+
+const IconCheck = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="20 6 9 17 4 12"/>
+  </svg>
+)
+
+const IconX = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+  </svg>
+)
+
+// ── Animated stat card
 function StatCard({ label, value, color, glow, delay, icon }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay }}
-      whileHover={{ y: -4, scale: 1.03 }}
+      initial={{ opacity: 0, y: 24, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] }}
+      whileHover={{ y: -6, scale: 1.04, boxShadow: `0 0 40px ${glow}40, 0 16px 40px rgba(0,0,0,0.5)` }}
       className="relative overflow-hidden rounded-2xl p-5 text-center"
-      style={{ border: `1px solid ${color}30`, background: 'rgba(0,0,0,0.55)' }}
-    >
+      style={{
+        border: `1px solid ${color}25`,
+        background: 'rgba(0,0,0,0.55)',
+        backdropFilter: 'blur(12px)',
+      }}>
+      {/* Top glow line */}
       <div className="absolute inset-x-0 top-0 h-px"
-        style={{ background: `linear-gradient(90deg,transparent,${color}80,transparent)` }} />
-      <div className="absolute inset-0 opacity-5 rounded-2xl"
-        style={{ background: `radial-gradient(circle at 50% 0%,${color},transparent 70%)` }} />
-      <span className="text-2xl">{icon}</span>
-      <p className="mt-2 font-perpetua text-3xl font-bold" style={{ color, textShadow: `0 0 16px ${glow}` }}>{value}</p>
-      <p className="mt-1 text-[10px] uppercase tracking-[0.25em]" style={{ color: 'rgba(241,196,15,0.5)' }}>{label}</p>
+        style={{ background: `linear-gradient(90deg,transparent,${color}90,transparent)` }} />
+      {/* Ambient bg */}
+      <div className="pointer-events-none absolute inset-0 rounded-2xl"
+        style={{ background: `radial-gradient(circle at 50% 0%,${color}18,transparent 65%)` }} />
+      {/* Corner shine */}
+      <div className="pointer-events-none absolute right-2 top-2 h-8 w-8"
+        style={{ background: `radial-gradient(circle at 100% 0%,${color}20,transparent 70%)` }} />
+      <div className="relative">
+        <motion.span className="block text-2xl" animate={{ filter: [`drop-shadow(0 0 4px ${glow}50)`, `drop-shadow(0 0 12px ${glow})`, `drop-shadow(0 0 4px ${glow}50)`] }} transition={{ duration: 2.5, repeat: Infinity, delay }}>
+          {icon}
+        </motion.span>
+        <motion.p className="mt-2 font-perpetua text-3xl font-bold"
+          style={{ color, textShadow: `0 0 20px ${glow}` }}
+          initial={{ scale: 0.5 }} animate={{ scale: 1 }}
+          transition={{ delay: delay + 0.15, type: 'spring', stiffness: 280 }}>
+          {value}
+        </motion.p>
+        <p className="mt-1 text-[10px] uppercase tracking-[0.25em]" style={{ color: 'rgba(241,196,15,0.45)' }}>{label}</p>
+      </div>
     </motion.div>
   )
 }
@@ -40,16 +112,10 @@ export function ProfilePage() {
     if (user) refreshProfile()
   }, [user])
 
-  const handleLogout = async () => {
-    await signOut()
-    navigate('/', { replace: true })
-  }
+  const handleLogout = async () => { await signOut(); navigate('/', { replace: true }) }
 
   const handleAvatarClick = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''
-      fileInputRef.current.click()
-    }
+    if (fileInputRef.current) { fileInputRef.current.value = ''; fileInputRef.current.click() }
   }
 
   const handleFileChange = async (e) => {
@@ -57,25 +123,20 @@ export function ProfilePage() {
     if (!file || !user) return
     if (file.size > 2 * 1024 * 1024) {
       setUploadMsg({ ok: false, text: 'File terlalu besar. Maksimal 2MB.' })
-      setTimeout(() => setUploadMsg(null), 3000)
-      return
+      setTimeout(() => setUploadMsg(null), 3000); return
     }
-    setUploading(true)
-    setUploadMsg(null)
+    setUploading(true); setUploadMsg(null)
     const ext = file.name.split('.').pop()
     const path = `${user.id}/avatar.${ext}`
     const { error: uploadError } = await supabase.storage.from('avatars').upload(path, file, { upsert: true })
     if (uploadError) {
       setUploadMsg({ ok: false, text: 'Gagal upload. Coba lagi.' })
-      setUploading(false)
-      setTimeout(() => setUploadMsg(null), 3000)
-      return
+      setUploading(false); setTimeout(() => setUploadMsg(null), 3000); return
     }
     const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(path)
     const publicUrl = urlData.publicUrl + '?t=' + Date.now()
     await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', user.id)
-    setAvatarUrl(publicUrl)
-    setUploading(false)
+    setAvatarUrl(publicUrl); setUploading(false)
     setUploadMsg({ ok: true, text: 'Foto profil berhasil diperbarui!' })
     await refreshProfile()
     setTimeout(() => setUploadMsg(null), 3000)
@@ -93,163 +154,260 @@ export function ProfilePage() {
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden rounded-2xl">
         <div style={{
           position: 'absolute', inset: 0,
-          background: 'radial-gradient(ellipse 70% 40% at 10% 0%,rgba(142,68,173,0.15) 0%,transparent 60%), radial-gradient(ellipse 50% 50% at 90% 100%,rgba(192,57,43,0.12) 0%,transparent 60%)',
+          background: 'radial-gradient(ellipse 70% 40% at 10% 0%,rgba(142,68,173,0.14) 0%,transparent 60%), radial-gradient(ellipse 50% 50% at 90% 100%,rgba(192,57,43,0.11) 0%,transparent 60%), radial-gradient(ellipse 40% 30% at 50% 50%,rgba(241,196,15,0.03) 0%,transparent 70%)',
         }} />
       </div>
 
-      {/* ── HEADER ── */}
-      <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }}>
-        <p className="text-[10px] uppercase tracking-[0.5em]" style={{ color: 'rgba(241,196,15,0.5)' }}>Akun Pemain</p>
-        <h1 className="mt-1 font-perpetua text-4xl md:text-5xl" style={{ color: '#F1C40F', textShadow: '0 0 24px rgba(241,196,15,0.4)' }}>Profil</h1>
+      {/* ── HEADER */}
+      <motion.div initial={{ opacity: 0, y: -18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+        <p className="text-[10px] uppercase tracking-[0.5em]" style={{ color: 'rgba(241,196,15,0.45)' }}>Akun Pemain</p>
+        <h1 className="mt-1 font-perpetua text-4xl md:text-5xl"
+          style={{ color: '#F1C40F', textShadow: '0 0 30px rgba(241,196,15,0.5), 0 0 60px rgba(241,196,15,0.15)' }}>
+          Profil
+        </h1>
       </motion.div>
 
-      {/* ── PROFILE CARD ── */}
+      {/* ── PROFILE CARD */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+        initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.5 }}
         className="relative overflow-hidden rounded-3xl p-6"
-        style={{ background: 'rgba(0,0,0,0.6)', border: '1px solid rgba(241,196,15,0.2)', boxShadow: '0 0 40px rgba(241,196,15,0.06)' }}
-      >
-        <div className="absolute inset-x-0 top-0 h-px"
-          style={{ background: 'linear-gradient(90deg,transparent,rgba(241,196,15,0.6),transparent)' }} />
-        {/* Purple glow top left */}
-        <div className="pointer-events-none absolute -left-10 -top-10 h-40 w-40 rounded-full"
-          style={{ background: 'radial-gradient(circle,rgba(142,68,173,0.25),transparent 70%)' }} />
+        style={{
+          background: 'rgba(0,0,0,0.6)',
+          border: '1px solid rgba(241,196,15,0.18)',
+          boxShadow: '0 0 60px rgba(241,196,15,0.05), 0 0 120px rgba(192,57,43,0.04)',
+          backdropFilter: 'blur(16px)',
+        }}>
+        {/* Top shimmer */}
+        <motion.div className="absolute inset-x-0 top-0 h-px"
+          style={{ background: 'linear-gradient(90deg,transparent,rgba(241,196,15,0.8),transparent)' }}
+          animate={{ backgroundPosition: ['200% 0', '-200% 0'] }}
+          transition={{ duration: 4, repeat: Infinity, ease: 'linear' }} />
+        {/* Bottom line */}
+        <div className="absolute inset-x-0 bottom-0 h-px"
+          style={{ background: 'linear-gradient(90deg,transparent,rgba(142,68,173,0.4),transparent)' }} />
+        {/* Corner glow */}
+        <div className="pointer-events-none absolute -left-8 -top-8 h-32 w-32 rounded-full"
+          style={{ background: 'radial-gradient(circle,rgba(142,68,173,0.2),transparent 70%)' }} />
+        <div className="pointer-events-none absolute -bottom-8 -right-8 h-32 w-32 rounded-full"
+          style={{ background: 'radial-gradient(circle,rgba(192,57,43,0.15),transparent 70%)' }} />
 
         <div className="flex flex-wrap items-center gap-5">
           {/* Avatar */}
-          <div className="relative shrink-0 cursor-pointer group" onClick={handleAvatarClick}>
+          <div className="relative shrink-0">
             <motion.div
-              whileHover={{ scale: 1.05 }}
-              className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full"
+              whileHover={{ scale: 1.06 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={handleAvatarClick}
+              className="relative flex h-24 w-24 cursor-pointer items-center justify-center overflow-hidden rounded-full"
               style={{
                 background: 'radial-gradient(circle at 35% 35%,#5b1fa0,#2d0a52)',
-                border: '2px solid rgba(241,196,15,0.4)',
-                boxShadow: '0 0 28px rgba(142,68,173,0.6), 0 0 0 4px rgba(142,68,173,0.1)',
-              }}
-            >
+                border: '2px solid rgba(241,196,15,0.35)',
+                boxShadow: '0 0 32px rgba(142,68,173,0.6), 0 0 64px rgba(142,68,173,0.15), 0 0 0 4px rgba(142,68,173,0.1)',
+              }}>
               {avatarUrl
                 ? <img src={avatarUrl} alt="avatar" className="h-full w-full object-cover" />
-                : <span className="text-4xl">🃏</span>
+                : <span className="text-4xl select-none">🃏</span>
               }
+              {/* Hover overlay */}
+              <motion.div
+                className="absolute inset-0 flex flex-col items-center justify-center gap-1 rounded-full"
+                style={{ background: 'rgba(0,0,0,0.7)', color: '#F1C40F' }}
+                initial={{ opacity: 0 }} whileHover={{ opacity: 1 }} transition={{ duration: 0.18 }}>
+                {uploading ? <IconSpin /> : <IconCamera />}
+                <span className="text-[9px] font-semibold uppercase tracking-wider">
+                  {uploading ? 'Upload...' : 'Ganti'}
+                </span>
+              </motion.div>
             </motion.div>
-            <div className="absolute inset-0 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-              style={{ background: 'rgba(0,0,0,0.65)' }}>
-              {uploading
-                ? <svg className="animate-spin h-6 w-6 text-amber-400" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
-                : <span className="text-xl">📷</span>
-              }
-            </div>
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
             {/* Online dot */}
-            <div className="absolute bottom-0.5 right-0.5 h-4 w-4 rounded-full border-2 border-black bg-green-400"
-              style={{ boxShadow: '0 0 8px #4ade80' }} />
+            <motion.div className="absolute bottom-0.5 right-0.5 h-4 w-4 rounded-full border-2"
+              style={{ background: '#4ade80', borderColor: '#050301', boxShadow: '0 0 8px #4ade80' }}
+              animate={{ boxShadow: ['0 0 4px #4ade80', '0 0 16px #4ade80, 0 0 32px #4ade8060', '0 0 4px #4ade80'] }}
+              transition={{ duration: 2, repeat: Infinity }} />
           </div>
 
           {/* Info */}
-          <div className="flex-1 min-w-0">
-            <p className="font-perpetua text-2xl md:text-3xl truncate" style={{ color: '#f5d87a' }}>{username}</p>
-            <p className="mt-0.5 truncate text-xs" style={{ color: 'rgba(241,196,15,0.4)' }}>{user?.email}</p>
-            <p className="mt-1 text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>Klik foto untuk ganti avatar</p>
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
+            <motion.p className="font-perpetua text-2xl md:text-3xl truncate"
+              style={{ color: '#f5d87a', textShadow: '0 0 16px rgba(241,196,15,0.3)' }}
+              animate={{ textShadow: ['0 0 10px rgba(241,196,15,0.2)', '0 0 24px rgba(241,196,15,0.5)', '0 0 10px rgba(241,196,15,0.2)'] }}
+              transition={{ duration: 3, repeat: Infinity }}>
+              {username}
+            </motion.p>
+            <p className="truncate text-xs" style={{ color: 'rgba(241,196,15,0.38)' }}>{user?.email}</p>
+            <div className="flex items-center gap-1.5">
+              <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold"
+                style={{ background: 'rgba(39,174,96,0.12)', border: '1px solid rgba(39,174,96,0.3)', color: '#4ade80' }}>
+                <motion.span className="h-1.5 w-1.5 rounded-full bg-green-400"
+                  animate={{ opacity: [0.5, 1, 0.5] }}
+                  transition={{ duration: 1.5, repeat: Infinity }} />
+                Online
+              </span>
+              <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.25)' }}>Klik foto untuk ganti avatar</span>
+            </div>
           </div>
 
           {/* Logout */}
           <motion.button type="button" onClick={handleLogout}
-            whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-            className="shrink-0 rounded-full px-5 py-2.5 text-sm font-semibold"
-            style={{ border: '1px solid rgba(192,57,43,0.5)', color: '#e74c3c', background: 'transparent', cursor: 'pointer' }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(192,57,43,0.12)'; e.currentTarget.style.boxShadow = '0 0 16px rgba(192,57,43,0.4)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.boxShadow = 'none' }}>
+            whileHover={{ scale: 1.05, boxShadow: '0 0 20px rgba(192,57,43,0.4)' }}
+            whileTap={{ scale: 0.95 }}
+            className="flex shrink-0 items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold"
+            style={{ border: '1px solid rgba(192,57,43,0.4)', color: '#e74c3c', background: 'transparent', cursor: 'pointer', transition: 'all 0.2s' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(192,57,43,0.1)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}>
+            <IconLogout />
             Logout
           </motion.button>
         </div>
 
+        {/* Upload message */}
         <AnimatePresence>
           {uploadMsg && (
-            <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-              className="mt-4 rounded-xl px-4 py-2.5 text-sm text-center"
+            <motion.div initial={{ opacity: 0, y: -8, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, scale: 0.97 }}
+              className="mt-4 flex items-center gap-2.5 rounded-xl px-4 py-3 text-sm"
               style={{
-                background: uploadMsg.ok ? 'rgba(39,174,96,0.15)' : 'rgba(192,57,43,0.15)',
+                background: uploadMsg.ok ? 'rgba(39,174,96,0.12)' : 'rgba(192,57,43,0.12)',
                 border: `1px solid ${uploadMsg.ok ? 'rgba(39,174,96,0.4)' : 'rgba(192,57,43,0.4)'}`,
-                color: uploadMsg.ok ? '#27ae60' : '#e74c3c',
+                color: uploadMsg.ok ? '#4ade80' : '#e74c3c',
               }}>
+              {uploadMsg.ok ? <IconCheck /> : <IconX />}
               {uploadMsg.text}
             </motion.div>
           )}
         </AnimatePresence>
       </motion.div>
 
-      {/* ── STATS ── */}
+      {/* ── STATS */}
       <div>
-        <motion.p
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
-          className="mb-4 text-[10px] uppercase tracking-[0.4em]" style={{ color: 'rgba(241,196,15,0.45)' }}>
-          Statistik Permainan
-        </motion.p>
+        <motion.div
+          initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}
+          className="mb-4 flex items-center gap-3">
+          <div className="h-px w-5" style={{ background: 'rgba(241,196,15,0.4)' }} />
+          <p className="text-[10px] uppercase tracking-[0.45em]" style={{ color: 'rgba(241,196,15,0.45)' }}>Statistik Permainan</p>
+          <div className="h-px flex-1" style={{ background: 'linear-gradient(90deg,rgba(241,196,15,0.2),transparent)' }} />
+        </motion.div>
+
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <StatCard label="Dimainkan" value={played} color="#F1C40F" glow="rgba(241,196,15,0.5)" delay={0.15} icon="🎮" />
-          <StatCard label="Menang" value={won} color="#27ae60" glow="rgba(39,174,96,0.5)" delay={0.2} icon="🏆" />
-          <StatCard label="Kalah" value={lost} color="#e74c3c" glow="rgba(231,76,60,0.5)" delay={0.25} icon="💀" />
-          <StatCard label="Win Rate" value={`${winRate}%`} color="#8e44ad" glow="rgba(142,68,173,0.5)" delay={0.3} icon="⚡" />
+          <StatCard label="Dimainkan" value={played} color="#F1C40F" glow="rgba(241,196,15,0.7)" delay={0.15} icon="🎮" />
+          <StatCard label="Menang"    value={won}    color="#4ade80" glow="rgba(74,222,128,0.7)"  delay={0.22} icon="🏆" />
+          <StatCard label="Kalah"     value={lost}   color="#e74c3c" glow="rgba(231,76,60,0.7)"   delay={0.29} icon="💀" />
+          <StatCard label="Win Rate"  value={`${winRate}%`} color="#a78bfa" glow="rgba(167,139,250,0.7)" delay={0.36} icon="⚡" />
         </div>
 
         {/* Win rate bar */}
         {played > 0 && (
           <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
-            className="mt-4 overflow-hidden rounded-full"
-            style={{ height: 6, background: 'rgba(231,76,60,0.3)' }}>
-            <motion.div
-              initial={{ width: 0 }} animate={{ width: `${winRate}%` }}
-              transition={{ duration: 1, delay: 0.6, ease: 'easeOut' }}
-              className="h-full rounded-full"
-              style={{ background: 'linear-gradient(90deg,#27ae60,#2ecc71)', boxShadow: '0 0 10px rgba(39,174,96,0.6)' }}
-            />
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.45 }}
+            className="mt-4 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] uppercase tracking-widest" style={{ color: 'rgba(241,196,15,0.4)' }}>Win Rate</span>
+              <motion.span className="text-xs font-bold" style={{ color: '#4ade80' }}
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }}>
+                {winRate}%
+              </motion.span>
+            </div>
+            <div className="overflow-hidden rounded-full" style={{ height: 7, background: 'rgba(231,76,60,0.25)' }}>
+              <motion.div className="relative h-full overflow-hidden rounded-full"
+                initial={{ width: 0 }} animate={{ width: `${winRate}%` }}
+                transition={{ duration: 1.2, delay: 0.65, ease: [0.22, 1, 0.36, 1] }}
+                style={{ background: 'linear-gradient(90deg,#16a34a,#4ade80)', boxShadow: '0 0 12px rgba(74,222,128,0.7)' }}>
+                <motion.div className="absolute inset-0"
+                  style={{ background: 'linear-gradient(90deg,transparent 0%,rgba(255,255,255,0.25) 50%,transparent 100%)' }}
+                  animate={{ x: ['-100%', '200%'] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: 'linear', delay: 1.5 }} />
+              </motion.div>
+            </div>
           </motion.div>
         )}
       </div>
 
-      {/* ── PLAY MODES ── */}
+      {/* ── PLAY MODES */}
       <div>
-        <motion.p
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }}
-          className="mb-4 text-[10px] uppercase tracking-[0.4em]" style={{ color: 'rgba(241,196,15,0.45)' }}>
-          Mode Permainan
-        </motion.p>
+        <motion.div
+          initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.35 }}
+          className="mb-4 flex items-center gap-3">
+          <div className="h-px w-5" style={{ background: 'rgba(241,196,15,0.4)' }} />
+          <p className="text-[10px] uppercase tracking-[0.45em]" style={{ color: 'rgba(241,196,15,0.45)' }}>Mode Permainan</p>
+          <div className="h-px flex-1" style={{ background: 'linear-gradient(90deg,rgba(241,196,15,0.2),transparent)' }} />
+        </motion.div>
+
         <div className="grid gap-3 sm:grid-cols-2">
           {[
             {
-              title: 'Lawan Bot', desc: 'Bermain melawan AI. Cocok untuk latihan dan menguasai strategi Kartu Batak.',
-              icon: '🤖', action: () => navigate('/game'), btnLabel: 'Main Sekarang',
-              gradient: 'linear-gradient(135deg,#a93226,#e74c3c)', glow: 'rgba(192,57,43,0.5)',
-              border: 'rgba(192,57,43,0.3)',
+              title: 'Lawan Bot',
+              desc: 'Bermain melawan AI. Cocok untuk latihan dan menguasai strategi Kartu Batak.',
+              icon: <IconBot />,
+              action: () => navigate('/game'),
+              btnLabel: 'Main Sekarang',
+              gradient: 'linear-gradient(135deg,#8b1a12,#c0392b,#e74c3c)',
+              glow: 'rgba(192,57,43,0.55)',
+              glowBright: 'rgba(192,57,43,0.8)',
+              border: 'rgba(192,57,43,0.28)',
+              bgAccent: 'rgba(192,57,43,0.1)',
+              delay: 0.4,
             },
             {
-              title: 'Multiplayer Online', desc: 'Tantang pemain lain secara real-time. Buat room atau join room teman.',
-              icon: '🌐', action: () => navigate('/lobby'), btnLabel: 'Masuk Lobby',
-              gradient: 'linear-gradient(135deg,#1a0a4a,#3d1a8a)', glow: 'rgba(91,31,160,0.5)',
-              border: 'rgba(142,68,173,0.3)',
+              title: 'Multiplayer Online',
+              desc: 'Tantang pemain lain secara real-time. Buat room atau join room teman.',
+              icon: <IconGlobe />,
+              action: () => navigate('/lobby'),
+              btnLabel: 'Masuk Lobby',
+              gradient: 'linear-gradient(135deg,#1a0a4a,#3d1a8a,#5b1fa0)',
+              glow: 'rgba(91,31,160,0.55)',
+              glowBright: 'rgba(142,68,173,0.8)',
+              border: 'rgba(142,68,173,0.28)',
+              bgAccent: 'rgba(142,68,173,0.08)',
+              delay: 0.48,
             },
-          ].map((m, i) => (
+          ].map((m) => (
             <motion.div key={m.title}
-              initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 + i * 0.1 }}
-              whileHover={{ y: -4, scale: 1.02 }}
-              className="relative overflow-hidden rounded-2xl p-5"
-              style={{ border: `1px solid ${m.border}`, background: 'rgba(0,0,0,0.5)' }}
-            >
+              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: m.delay, duration: 0.5 }}
+              whileHover={{ y: -5, scale: 1.02, boxShadow: `0 0 50px ${m.glow}, 0 20px 50px rgba(0,0,0,0.5)` }}
+              className="group relative overflow-hidden rounded-2xl p-5"
+              style={{
+                border: `1px solid ${m.border}`,
+                background: 'rgba(0,0,0,0.55)',
+                backdropFilter: 'blur(12px)',
+                transition: 'box-shadow 0.3s ease',
+              }}>
+              {/* Top shimmer line */}
               <div className="absolute inset-x-0 top-0 h-px"
-                style={{ background: `linear-gradient(90deg,transparent,${m.glow.replace('0.5', '0.8')},transparent)` }} />
-              <div className="mb-4 flex items-center gap-3">
-                <span className="text-3xl">{m.icon}</span>
-                <p className="font-perpetua text-xl" style={{ color: '#f5d87a' }}>{m.title}</p>
+                style={{ background: `linear-gradient(90deg,transparent,${m.glowBright},transparent)` }} />
+              {/* Corner accent */}
+              <div className="pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full opacity-40"
+                style={{ background: `radial-gradient(circle,${m.bgAccent},transparent 70%)` }} />
+              {/* Hover bg sweep */}
+              <motion.div className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100"
+                style={{ background: `radial-gradient(ellipse at 20% 50%,${m.bgAccent},transparent 60%)`, transition: 'opacity 0.3s' }} />
+
+              <div className="relative">
+                <div className="mb-4 flex items-center gap-3">
+                  <motion.div
+                    className="flex h-11 w-11 items-center justify-center rounded-xl"
+                    style={{ background: m.bgAccent, border: `1px solid ${m.border}`, color: '#f5d87a' }}
+                    whileHover={{ rotate: [0, -8, 8, 0] }} transition={{ duration: 0.4 }}>
+                    {m.icon}
+                  </motion.div>
+                  <p className="font-perpetua text-xl" style={{ color: '#f5d87a', textShadow: '0 0 10px rgba(241,196,15,0.2)' }}>
+                    {m.title}
+                  </p>
+                </div>
+                <p className="mb-5 text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.48)' }}>{m.desc}</p>
+                <motion.button type="button" onClick={m.action}
+                  whileHover={{ scale: 1.04, boxShadow: `0 0 24px ${m.glow}` }}
+                  whileTap={{ scale: 0.97 }}
+                  className="relative w-full overflow-hidden rounded-xl py-2.5 text-sm font-bold tracking-wide text-white"
+                  style={{ background: m.gradient, cursor: 'pointer', border: 'none', boxShadow: `0 0 16px ${m.glow}` }}>
+                  {/* Shimmer */}
+                  <motion.span className="pointer-events-none absolute inset-0"
+                    style={{ background: 'linear-gradient(105deg,transparent 30%,rgba(255,255,255,0.12) 50%,transparent 70%)' }}
+                    animate={{ x: ['-100%', '200%'] }}
+                    transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut', repeatDelay: 2 }} />
+                  <span className="relative z-10">{m.btnLabel}</span>
+                </motion.button>
               </div>
-              <p className="mb-4 text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.5)' }}>{m.desc}</p>
-              <motion.button type="button" onClick={m.action}
-                whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}
-                className="w-full rounded-full py-2.5 text-sm font-bold tracking-wide text-white"
-                style={{ background: m.gradient, cursor: 'pointer', boxShadow: `0 0 16px ${m.glow}`, border: 'none' }}>
-                {m.btnLabel}
-              </motion.button>
             </motion.div>
           ))}
         </div>
