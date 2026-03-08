@@ -100,7 +100,7 @@ export function HistoryPage() {
           Jejak &amp; Aturan Kartu Batak
         </h1>
         <p className="max-w-xl text-xs text-amber-200/80">
-          Dari Black Peter di Eropa hingga Jokeran di Indonesia, Joker Card
+          Dari Black Peter di Eropa hingga Jokeran di Indonesia, Kartu Batak
           membawa tradisi permainan lama ke meja digital Bataker Project.
         </p>
       </header>
@@ -119,7 +119,7 @@ export function HistoryPage() {
           <h2 className="font-perpetua text-2xl text-amber-200">Jejak Sejarah</h2>
           <p className="mt-1 text-[11px] text-amber-200/80">
             Garis waktu singkat bagaimana permainan tipe Old Maid berkembang
-            hingga menjadi Joker Card di Bataker Project.
+            hingga menjadi Kartu Batak di Bataker Project.
           </p>
 
           <div className="mt-5 relative">
@@ -172,7 +172,7 @@ export function HistoryPage() {
           </p>
           <p className="text-amber-100/80">
             Dahulu, memegang kartu terakhir berarti menerima hukuman atau
-            ejekan. Di Joker Card, tradisi itu dipertahankan dalam bentuk Joker
+            ejekan. Di Kartu Batak, tradisi itu dipertahankan dalam bentuk Joker
             sebagai kartu sial yang harus kamu hindari sampai akhir permainan.
           </p>
           <p className="text-amber-100/80">
@@ -195,7 +195,7 @@ export function HistoryPage() {
         >
           <h2 className="font-perpetua text-2xl text-amber-200">Peraturan Utama</h2>
           <p className="mt-1 text-[11px] text-amber-200/80">
-            Versi Joker Card di Bataker Project mengikuti pola Old Maid dengan
+            Versi Kartu Batak di Bataker Project mengikuti pola Old Maid dengan
             sentuhan Joker spesial.
           </p>
 
@@ -321,7 +321,7 @@ export function HistoryPage() {
               Balik Arah Putaran
             </p>
             <p className="mt-2 text-amber-100/90">
-              Di Joker Card (Bataker Project), pemain yang baru saja menerima
+              Di Kartu Batak (Bataker Project), pemain yang baru saja menerima
               Joker mendapatkan hak istimewa: <span className="font-semibold">membalik arah putaran</span>.
             </p>
             <ul className="mt-2 list-disc pl-4 text-amber-100/90">
