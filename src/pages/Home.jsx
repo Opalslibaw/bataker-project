@@ -306,7 +306,7 @@ export function HomePage() {
                 className="mt-2 font-perpetua text-5xl font-bold leading-none sm:text-6xl lg:text-7xl"
                 style={{ color: '#F1C40F', textShadow: '0 0 30px rgba(241,196,15,0.5), 0 0 60px rgba(192,57,43,0.3)' }}
                 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35, duration: 0.6 }}>
-                JOKER CARD
+                KARTU BATAK
               </motion.h1>
               <motion.p className="mt-2 text-sm uppercase tracking-[0.45em]"
                 style={{ color: 'rgba(241,196,15,0.6)' }}

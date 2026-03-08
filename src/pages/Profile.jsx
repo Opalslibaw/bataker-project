@@ -179,7 +179,7 @@ export function ProfilePage() {
         <div className="grid gap-3 sm:grid-cols-2">
           {[
             {
-              title: 'Lawan Bot', desc: 'Bermain melawan AI. Cocok untuk latihan dan menguasai strategi Joker Card.',
+              title: 'Lawan Bot', desc: 'Bermain melawan AI. Cocok untuk latihan dan menguasai strategi Kartu Batak.',
               icon: '🤖', action: () => navigate('/game'), btnLabel: 'Main Sekarang',
             },
             {

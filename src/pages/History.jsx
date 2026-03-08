@@ -97,7 +97,7 @@ export function HistoryPage() {
           Sejarah &amp; Peraturan
         </p>
         <h1 className="font-perpetua text-3xl text-amber-200 sm:text-4xl">
-          Jejak &amp; Aturan Joker Card
+          Jejak &amp; Aturan Kartu Batak
         </h1>
         <p className="max-w-xl text-xs text-amber-200/80">
           Dari Black Peter di Eropa hingga Jokeran di Indonesia, Joker Card
@@ -390,7 +390,7 @@ export function HistoryPage() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            Gulir ke atas untuk kembali ke meja Joker Card.
+            Gulir ke atas untuk kembali ke meja Kartu Batak.
           </motion.div>
         )}
       </AnimatePresence>
