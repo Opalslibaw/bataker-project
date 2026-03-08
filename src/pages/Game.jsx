@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase.js'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth.jsx'
 import { useEffect, useReducer, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -278,6 +279,7 @@ export function GamePage() {
   const [state, dispatch] = useReducer(gameReducer, initialState)
   const [shuffling, setShuffling] = useState(true)
   const { user, refreshProfile } = useAuth()
+  const navigate = useNavigate()
   const statsUpdated = useRef(false)
 
   useEffect(() => {
@@ -644,13 +646,22 @@ export function GamePage() {
                     ))}
                   </div>
 
-                  <motion.button type="button" onClick={handleRestart}
-                    whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-                    style={{ borderRadius: 9999, padding: '12px 36px', fontSize: 14, fontWeight: 700, border: 'none',
-                      background: 'linear-gradient(135deg,#a93226,#e74c3c)', color: '#fff', cursor: 'pointer',
-                      boxShadow: '0 0 24px rgba(192,57,43,0.6)', letterSpacing: '0.1em' }}>
-                    Main Lagi
-                  </motion.button>
+                  <div style={{ display:'flex',gap:10,justifyContent:'center',flexWrap:'wrap' }}>
+                    <motion.button type="button" onClick={handleRestart}
+                      whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                      style={{ borderRadius: 9999, padding: '12px 28px', fontSize: 14, fontWeight: 700, border: 'none',
+                        background: 'linear-gradient(135deg,#a93226,#e74c3c)', color: '#fff', cursor: 'pointer',
+                        boxShadow: '0 0 24px rgba(192,57,43,0.6)', letterSpacing: '0.1em' }}>
+                      🔁 Main Lagi
+                    </motion.button>
+                    <motion.button type="button" onClick={() => navigate('/')}
+                      whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                      style={{ borderRadius: 9999, padding: '12px 28px', fontSize: 14, fontWeight: 700, cursor: 'pointer',
+                        border: '1px solid rgba(241,196,15,0.35)', background: 'rgba(241,196,15,0.08)',
+                        color: 'rgba(241,196,15,0.85)' }}>
+                      🏠 Beranda
+                    </motion.button>
+                  </div>
                 </motion.div>
               )
             })()}
