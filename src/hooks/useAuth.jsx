@@ -16,6 +16,7 @@ export function AuthProvider({ children }) {
   const [initialLoading, setInitialLoading] = useState(true)
   const [authLoading, setAuthLoading] = useState(false)
   const mountedRef = useRef(true)
+  const loadingDoneRef = useRef(false)
 
   const fetchProfile = async (uid) => {
     if (!uid) return null
@@ -23,33 +24,21 @@ export function AuthProvider({ children }) {
     return data ?? null
   }
 
+  const stopLoading = () => {
+    if (!loadingDoneRef.current && mountedRef.current) {
+      loadingDoneRef.current = true
+      setInitialLoading(false)
+    }
+  }
+
   useEffect(() => {
     mountedRef.current = true
+    loadingDoneRef.current = false
 
-    const init = async () => {
-      // Get session directly first (works on mobile)
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!mountedRef.current) return
-      
-      if (session?.user) {
-        setUser(session.user)
-        const profileData = await fetchProfile(session.user.id)
-        if (mountedRef.current) setProfile(profileData)
-      } else {
-        setUser(null)
-        setProfile(null)
-      }
-      if (mountedRef.current) setInitialLoading(false)
-    }
+    // Hard fallback — maksimal 2 detik loading
+    const hardTimeout = setTimeout(stopLoading, 2000)
 
-    init()
-
-    // Fallback jika init lambat di mobile
-    const fallbackTimer = setTimeout(() => {
-      if (mountedRef.current) setInitialLoading(false)
-    }, 1500)
-
-    // Also listen for auth changes (login, logout)
+    // Listen auth changes dulu sebelum getSession
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mountedRef.current) return
       const sessionUser = session?.user ?? null
@@ -60,13 +49,28 @@ export function AuthProvider({ children }) {
       } else {
         setProfile(null)
       }
-      // Ensure loading stops on any auth event
-      if (mountedRef.current) setInitialLoading(false)
+      stopLoading()
+    })
+
+    // Juga cek session langsung
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mountedRef.current || loadingDoneRef.current) return
+      if (session?.user) {
+        setUser(session.user)
+        fetchProfile(session.user.id).then(profileData => {
+          if (mountedRef.current) setProfile(profileData)
+          stopLoading()
+        })
+      } else {
+        setUser(null)
+        setProfile(null)
+        stopLoading()
+      }
     })
 
     return () => {
       mountedRef.current = false
-      clearTimeout(fallbackTimer)
+      clearTimeout(hardTimeout)
       subscription.unsubscribe()
     }
   }, [])
