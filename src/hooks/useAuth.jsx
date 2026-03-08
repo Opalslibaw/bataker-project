@@ -89,7 +89,11 @@ export function AuthProvider({ children }) {
   const signUp = async ({ username, email, password }) => {
     setAuthLoading(true)
     try {
-      const { data: { user: newUser }, error } = await supabase.auth.signUp({ email, password })
+      const { data: { user: newUser }, error } = await supabase.auth.signUp({ 
+        email, 
+        password,
+        options: { data: { username } }
+      })
       if (error || !newUser) return { ok: false, message: error?.message || 'Gagal mendaftar.' }
       const { error: profileError } = await supabase.from('profiles').insert({
         id: newUser.id,
