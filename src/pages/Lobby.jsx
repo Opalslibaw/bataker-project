@@ -18,6 +18,7 @@ export function LobbyPage() {
 
   const handleCreate = async () => {
     setFormError('')
+    if (!user?.id) { setFormError('Sesi belum siap, coba lagi.'); return }
     const result = await createRoom({ userId: user.id, username, maxPlayers })
     if (result.ok) navigate('/multiplayer', { state: { room: result.room, isHost: true } })
     else setFormError(result.message)
@@ -25,6 +26,7 @@ export function LobbyPage() {
 
   const handleJoin = async () => {
     setFormError('')
+    if (!user?.id) { setFormError('Sesi belum siap, coba lagi.'); return }
     if (joinCode.length < 6) { setFormError('Masukkan kode room 6 karakter.'); return }
     const result = await joinRoom({ code: joinCode, userId: user.id, username })
     if (result.ok) navigate('/multiplayer', { state: { room: result.room, isHost: false } })
