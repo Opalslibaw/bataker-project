@@ -49,24 +49,34 @@ const mpStyles = `
     100% { background-position: 200% center; }
   }
   @keyframes mp-orbFloat {
-    0%, 100% { transform: translateY(0px); opacity: 0.3; }
-    50% { transform: translateY(-15px); opacity: 0.5; }
+    0%, 100% { transform: translateY(0px); opacity: 0.35; }
+    50% { transform: translateY(-15px); opacity: 0.55; }
   }
   @keyframes mp-pulse-border {
     0%, 100% { border-color: rgba(241,196,15,0.4); box-shadow: 0 0 20px rgba(241,196,15,0.2); }
-    50% { border-color: rgba(241,196,15,0.8); box-shadow: 0 0 40px rgba(241,196,15,0.4); }
+    50% { border-color: rgba(241,196,15,0.85); box-shadow: 0 0 40px rgba(241,196,15,0.45); }
   }
   @keyframes mp-jokerPulse {
-    0%, 100% { box-shadow: 0 0 15px rgba(192,57,43,0.5), 0 4px 16px rgba(0,0,0,0.7); }
-    50% { box-shadow: 0 0 40px rgba(192,57,43,0.9), 0 4px 16px rgba(0,0,0,0.7); }
+    0%, 100% { box-shadow: 0 0 20px rgba(192,57,43,0.6), 0 4px 16px rgba(0,0,0,0.7); }
+    50% { box-shadow: 0 0 55px rgba(192,57,43,1), 0 0 90px rgba(192,57,43,0.25), 0 4px 16px rgba(0,0,0,0.7); }
+  }
+  @keyframes mp-cardGlow {
+    0%, 100% { box-shadow: 0 0 18px rgba(241,196,15,0.45), 0 4px 14px rgba(0,0,0,0.7); }
+    50% { box-shadow: 0 0 40px rgba(241,196,15,0.85), 0 0 70px rgba(241,196,15,0.2), 0 4px 14px rgba(0,0,0,0.7); }
+  }
+  @keyframes mp-borderPulse {
+    0%, 100% { border-color: rgba(241,196,15,0.35); }
+    50% { border-color: rgba(241,196,15,0.8); box-shadow: 0 0 14px rgba(241,196,15,0.25); }
   }
   .mp-card-hover:hover {
-    transform: translateY(-16px) scale(1.12) !important;
-    z-index: 10 !important;
-  }
-  .mp-neighbor-hover:hover {
     transform: translateY(-18px) scale(1.14) !important;
     z-index: 10 !important;
+    filter: brightness(1.05) !important;
+  }
+  .mp-neighbor-hover:hover {
+    transform: translateY(-20px) scale(1.18) !important;
+    z-index: 10 !important;
+    filter: brightness(1.08) !important;
   }
   .mp-scrollbar::-webkit-scrollbar { width: 4px; }
   .mp-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
@@ -81,9 +91,9 @@ function CardFace({ card, size='md', glow=false }) {
     <div style={{
       width:s.w, height:s.h, borderRadius:9, flexShrink:0,
       background:isJoker?'linear-gradient(145deg,#0d0020,#2a0050)':'linear-gradient(160deg,#fdfaf0,#f7f0de,#ede0c0)',
-      border:isJoker?'1.5px solid rgba(220,50,50,0.8)':'1px solid rgba(190,160,100,0.55)',
+      border:isJoker?'1.5px solid rgba(220,50,50,0.85)':'1px solid rgba(190,160,100,0.55)',
       boxShadow:glow||isJoker
-        ?'0 0 20px rgba(200,50,43,0.8), 0 4px 14px rgba(0,0,0,0.7)'
+        ?'0 0 24px rgba(200,50,43,0.9), 0 0 48px rgba(200,50,43,0.25), 0 4px 14px rgba(0,0,0,0.7)'
         :'0 4px 14px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.25)',
       display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'space-between',
       padding:'4px 3px', position:'relative', overflow:'hidden',
@@ -95,13 +105,13 @@ function CardFace({ card, size='md', glow=false }) {
       )}
       {isJoker?(
         <>
-          <span style={{fontSize:s.st,alignSelf:'flex-start',filter:'drop-shadow(0 0 4px rgba(255,100,100,0.6))'}}>🃏</span>
+          <span style={{fontSize:s.st,alignSelf:'flex-start',filter:'drop-shadow(0 0 6px rgba(255,100,100,0.8))'}}>🃏</span>
           <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:1}}>
-            <span style={{fontSize:s.r+5,filter:'drop-shadow(0 0 8px rgba(255,80,80,0.8))'}}>🃏</span>
-            <span style={{fontSize:6,color:'rgba(255,180,180,0.6)',letterSpacing:'0.2em',fontFamily:'Cinzel,serif'}}>JOKER</span>
+            <span style={{fontSize:s.r+5,filter:'drop-shadow(0 0 10px rgba(255,80,80,1))'}}>🃏</span>
+            <span style={{fontSize:6,color:'rgba(255,180,180,0.75)',letterSpacing:'0.2em',fontFamily:'Cinzel,serif'}}>JOKER</span>
           </div>
-          <span style={{fontSize:s.st,alignSelf:'flex-end',transform:'rotate(180deg)',filter:'drop-shadow(0 0 4px rgba(255,100,100,0.6))'}}>🃏</span>
-          <div style={{position:'absolute',inset:0,background:'radial-gradient(circle at 50% 50%,rgba(200,50,50,0.18),transparent 70%)',borderRadius:8,pointerEvents:'none'}}/>
+          <span style={{fontSize:s.st,alignSelf:'flex-end',transform:'rotate(180deg)',filter:'drop-shadow(0 0 6px rgba(255,100,100,0.8))'}}>🃏</span>
+          <div style={{position:'absolute',inset:0,background:'radial-gradient(circle at 50% 50%,rgba(200,50,50,0.22),transparent 70%)',borderRadius:8,pointerEvents:'none'}}/>
         </>
       ):(
         <>
@@ -129,23 +139,136 @@ function CardBack({ size='md', selected=false, canClick=false, onClick }) {
       style={{
         width:s.w, height:s.h, borderRadius:9, flexShrink:0, cursor:canClick?'pointer':'default',
         background:selected?'linear-gradient(145deg,#2a0a50,#4a1a80)':'linear-gradient(145deg,#140830,#26105a,#1c0c40)',
-        border:selected?'2px solid #F1C40F':'1px solid rgba(120,60,200,0.35)',
+        border:selected?'2px solid #F1C40F':'1px solid rgba(120,60,200,0.4)',
         boxShadow:selected
-          ?'0 0 28px rgba(241,196,15,1),0 0 56px rgba(241,196,15,0.4),0 8px 24px rgba(0,0,0,0.8)'
+          ?'0 0 32px rgba(241,196,15,1),0 0 64px rgba(241,196,15,0.4),0 8px 24px rgba(0,0,0,0.8)'
+          :canClick
+          ?'0 0 14px rgba(200,60,60,0.3), 0 4px 14px rgba(0,0,0,0.6)'
           :'0 4px 14px rgba(0,0,0,0.6)',
         display:'flex', alignItems:'center', justifyContent:'center',
         position:'relative', overflow:'hidden',
         transition:'box-shadow 0.2s, transform 0.18s cubic-bezier(0.34,1.56,0.64,1)',
+        animation: canClick && !selected ? 'mp-borderPulse 2s ease-in-out infinite' : 'none',
       }}>
-      <div style={{position:'absolute',inset:5,borderRadius:5,border:'1px solid rgba(241,196,15,0.25)'}}/>
+      <div style={{position:'absolute',inset:5,borderRadius:5,border:'1px solid rgba(241,196,15,0.3)'}}/>
       <div style={{position:'absolute',inset:8,borderRadius:3,
-        background:'repeating-linear-gradient(45deg,rgba(241,196,15,0.04) 0px,rgba(241,196,15,0.04) 2px,transparent 2px,transparent 7px)'}}/>
+        background:'repeating-linear-gradient(45deg,rgba(241,196,15,0.05) 0px,rgba(241,196,15,0.05) 2px,transparent 2px,transparent 7px)'}}/>
       {/* Diamond */}
-      <div style={{width:16,height:16,border:'1px solid rgba(241,196,15,0.35)',transform:'rotate(45deg)',
-        position:'relative',zIndex:1,background:'rgba(241,196,15,0.04)'}}>
-        <div style={{position:'absolute',inset:3,border:'1px solid rgba(241,196,15,0.2)'}}/>
+      <div style={{width:16,height:16,border:'1px solid rgba(241,196,15,0.4)',transform:'rotate(45deg)',
+        position:'relative',zIndex:1,background:'rgba(241,196,15,0.05)',boxShadow:'0 0 6px rgba(241,196,15,0.12)'}}>
+        <div style={{position:'absolute',inset:3,border:'1px solid rgba(241,196,15,0.25)'}}/>
       </div>
-      {selected&&<div style={{position:'absolute',inset:0,background:'rgba(241,196,15,0.1)',borderRadius:8}}/>}
+      {/* Shimmer sweep */}
+      {canClick && (
+        <motion.div style={{
+          position:'absolute',inset:0,borderRadius:8,pointerEvents:'none',
+          background:'linear-gradient(105deg,transparent 30%,rgba(255,255,255,0.05) 50%,transparent 70%)',
+          backgroundSize:'200% 100%',
+        }}
+          animate={{backgroundPosition:['-200% 0','200% 0']}}
+          transition={{duration:2,repeat:Infinity,ease:'linear'}}/>
+      )}
+      {selected&&<div style={{position:'absolute',inset:0,background:'rgba(241,196,15,0.13)',borderRadius:8}}/>}
+    </motion.div>
+  )
+}
+
+/* ── PAIR ANIMATION — identical to Game.jsx ── */
+function PairAnimation({ pairRank }) {
+  return (
+    <motion.div
+      style={{position:'absolute',inset:0,zIndex:20,display:'flex',alignItems:'center',justifyContent:'center',pointerEvents:'none'}}
+      initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}>
+      <div style={{position:'absolute',inset:0,background:'radial-gradient(ellipse at center,rgba(241,196,15,0.1),transparent 70%)',borderRadius:20}}/>
+      {/* Sparkle particles */}
+      {[...Array(6)].map((_,i)=>(
+        <motion.div key={i} style={{
+          position:'absolute',left:`${30+i*7}%`,top:'45%',
+          width:4,height:4,borderRadius:'50%',
+          background:'#F1C40F',boxShadow:'0 0 8px rgba(241,196,15,0.9)',
+        }}
+          animate={{y:[0,-90],opacity:[1,0],scale:[1,0]}}
+          transition={{duration:0.9,delay:i*0.08}}/>
+      ))}
+      <motion.div initial={{scale:0.5,y:20}} animate={{scale:1,y:0}} exit={{scale:0.5,y:20}}
+        style={{display:'flex',flexDirection:'column',alignItems:'center',gap:16}}>
+        <div style={{display:'flex',gap:10}}>
+          {[0,1].map(i=>(
+            <motion.div key={i}
+              animate={{x:i===0?[-8,8,0]:[8,-8,0],y:[0,-14,0],rotate:i===0?[-5,5,0]:[5,-5,0]}}
+              transition={{duration:0.6}}
+              style={{
+                width:58,height:80,borderRadius:10,
+                background:'linear-gradient(160deg,#fffef5,#fff0b0)',
+                border:'2.5px solid #F1C40F',
+                boxShadow:'0 0 36px rgba(241,196,15,1),0 0 72px rgba(241,196,15,0.4)',
+                display:'flex',alignItems:'center',justifyContent:'center',
+                fontFamily:'Cinzel,serif',fontSize:26,fontWeight:900,color:'#c0392b',
+              }}>
+              {pairRank}
+            </motion.div>
+          ))}
+        </div>
+        <motion.div initial={{y:12,opacity:0}} animate={{y:0,opacity:1}}
+          style={{
+            borderRadius:9999,padding:'8px 24px',
+            background:'linear-gradient(135deg,rgba(0,0,0,0.97),rgba(20,15,0,0.97))',
+            border:'1px solid rgba(241,196,15,0.7)',
+            fontSize:13,fontWeight:700,color:'#F1C40F',
+            letterSpacing:'0.2em',fontFamily:'Cinzel,serif',
+            boxShadow:'0 0 32px rgba(241,196,15,0.5)',
+          }}>
+          ✨ PASANGAN!
+        </motion.div>
+      </motion.div>
+    </motion.div>
+  )
+}
+
+/* ── JOKER ANIMATION — identical to Game.jsx ── */
+function JokerAnimation() {
+  return (
+    <motion.div
+      style={{position:'absolute',inset:0,zIndex:30,display:'flex',alignItems:'center',justifyContent:'center'}}
+      initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}>
+      <div style={{position:'absolute',inset:0,background:'radial-gradient(ellipse at center,rgba(192,57,43,0.18),transparent 65%)',borderRadius:20}}/>
+      <motion.div animate={{y:['-100%','200%']}} transition={{duration:1.5,repeat:2}}
+        style={{position:'absolute',inset:0,background:'linear-gradient(180deg,transparent 40%,rgba(192,57,43,0.08) 50%,transparent 60%)',pointerEvents:'none'}}/>
+      {/* Red particles */}
+      {[...Array(6)].map((_,i)=>(
+        <motion.div key={i} style={{
+          position:'absolute',left:`${25+i*10}%`,top:'55%',
+          width:4,height:4,borderRadius:'50%',
+          background:'#e74c3c',boxShadow:'0 0 8px rgba(192,57,43,0.9)',
+        }}
+          animate={{y:[0,-100],opacity:[1,0],scale:[1,0]}}
+          transition={{duration:1,delay:i*0.1}}/>
+      ))}
+      <motion.div initial={{scale:0.6,rotate:-15}} animate={{scale:1,rotate:0}} exit={{scale:0.6}}
+        style={{display:'flex',flexDirection:'column',alignItems:'center',gap:18,position:'relative',zIndex:1}}>
+        <motion.div animate={{rotate:[-4,4,-4],y:[0,-8,0]}} transition={{duration:0.9,repeat:3}}
+          style={{
+            width:88,height:124,borderRadius:14,
+            background:'linear-gradient(145deg,#0d0020,#2a0050)',
+            border:'2.5px solid #e74c3c',
+            boxShadow:'0 0 70px rgba(192,57,43,1),0 0 140px rgba(192,57,43,0.5),inset 0 0 30px rgba(192,57,43,0.25)',
+            display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:8,
+          }}>
+          <span style={{fontSize:42,filter:'drop-shadow(0 0 14px rgba(255,80,80,1))'}}>🃏</span>
+          <span style={{fontSize:10,color:'#F1C40F',letterSpacing:'0.3em',fontFamily:'Cinzel,serif',textTransform:'uppercase'}}>Joker</span>
+        </motion.div>
+        <motion.div initial={{y:14,opacity:0}} animate={{y:0,opacity:1}}
+          style={{
+            borderRadius:9999,padding:'10px 28px',
+            background:'linear-gradient(135deg,rgba(0,0,0,0.97),rgba(30,5,5,0.97))',
+            border:'1px solid rgba(192,57,43,0.8)',
+            fontSize:14,fontWeight:700,color:'#e74c3c',
+            letterSpacing:'0.15em',fontFamily:'Cinzel,serif',
+            boxShadow:'0 0 36px rgba(192,57,43,0.6)',
+          }}>
+          😈 DAPAT JOKER!
+        </motion.div>
+      </motion.div>
     </motion.div>
   )
 }
@@ -157,23 +280,23 @@ function ChatPanel({ messages, onSend, username, onClose }) {
   useEffect(()=>{ bottomRef.current?.scrollIntoView({behavior:'smooth'}) },[messages])
   const handleSend=()=>{ if(!text.trim()) return; onSend(text); setText('') }
   return (
-    <div style={{ display:'flex',flexDirection:'column',height:'100%',minHeight:0,background:'linear-gradient(180deg,rgba(5,2,15,0.98),rgba(10,4,25,0.98))' }}>
-      <div style={{ padding:'12px 16px',borderBottom:'1px solid rgba(241,196,15,0.1)',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'space-between' }}>
+    <div style={{display:'flex',flexDirection:'column',height:'100%',minHeight:0,background:'linear-gradient(180deg,rgba(5,2,15,0.98),rgba(10,4,25,0.98))'}}>
+      <div style={{padding:'12px 16px',borderBottom:'1px solid rgba(241,196,15,0.1)',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
         <div style={{display:'flex',alignItems:'center',gap:8}}>
-          <div style={{width:6,height:6,borderRadius:'50%',background:'rgba(39,174,96,0.8)',boxShadow:'0 0 8px rgba(39,174,96,0.6)'}}/>
+          <motion.div style={{width:6,height:6,borderRadius:'50%',background:'rgba(39,174,96,0.8)'}}
+            animate={{boxShadow:['0 0 4px rgba(39,174,96,0.4)','0 0 12px rgba(39,174,96,0.8)','0 0 4px rgba(39,174,96,0.4)']}}
+            transition={{duration:2,repeat:Infinity}}/>
           <p style={{fontFamily:'Cinzel,serif',fontSize:12,color:'#F1C40F',letterSpacing:'0.1em',margin:0}}>Live Chat</p>
         </div>
         {onClose&&(
           <button type="button" onClick={onClose}
             style={{background:'none',border:'none',color:'rgba(255,255,255,0.3)',cursor:'pointer',fontSize:14,lineHeight:1,
-              width:24,height:24,borderRadius:6,display:'flex',alignItems:'center',justifyContent:'center',
-              transition:'background 0.2s'}}
+              width:24,height:24,borderRadius:6,display:'flex',alignItems:'center',justifyContent:'center',transition:'background 0.2s'}}
             onMouseEnter={e=>e.target.style.background='rgba(255,255,255,0.06)'}
-            onMouseLeave={e=>e.target.style.background='none'}
-          >✕</button>
+            onMouseLeave={e=>e.target.style.background='none'}>✕</button>
         )}
       </div>
-      <div className="mp-scrollbar" style={{ flex:1,overflowY:'auto',padding:'10px 12px',display:'flex',flexDirection:'column',gap:8,minHeight:0 }}>
+      <div className="mp-scrollbar" style={{flex:1,overflowY:'auto',padding:'10px 12px',display:'flex',flexDirection:'column',gap:8,minHeight:0}}>
         {messages.length===0&&(
           <div style={{textAlign:'center',marginTop:24,padding:'0 16px'}}>
             <p style={{fontSize:20,marginBottom:8}}>💬</p>
@@ -181,7 +304,7 @@ function ChatPanel({ messages, onSend, username, onClose }) {
           </div>
         )}
         {messages.map(msg=>(
-          <div key={msg.id} style={{ display:'flex',flexDirection:'column',alignItems:msg.username===username?'flex-end':'flex-start' }}>
+          <div key={msg.id} style={{display:'flex',flexDirection:'column',alignItems:msg.username===username?'flex-end':'flex-start'}}>
             <p style={{fontSize:9,color:msg.username===username?'rgba(142,68,173,0.6)':'rgba(241,196,15,0.35)',marginBottom:3,fontFamily:'Cinzel,serif',letterSpacing:'0.05em'}}>{msg.username}</p>
             <div style={{
               maxWidth:'85%',borderRadius:msg.username===username?'10px 10px 2px 10px':'10px 10px 10px 2px',
@@ -190,26 +313,23 @@ function ChatPanel({ messages, onSend, username, onClose }) {
               border:msg.username===username?'1px solid rgba(142,68,173,0.3)':'1px solid rgba(255,255,255,0.07)',
               color:'rgba(255,255,255,0.85)',wordBreak:'break-word',
               boxShadow:msg.username===username?'0 2px 12px rgba(91,31,160,0.2)':'none',
-            }}>
-              {msg.content}
-            </div>
+            }}>{msg.content}</div>
           </div>
         ))}
         <div ref={bottomRef}/>
       </div>
-      <div style={{ padding:'8px 10px',borderTop:'1px solid rgba(241,196,15,0.08)',display:'flex',gap:8,flexShrink:0 }}>
+      <div style={{padding:'8px 10px',borderTop:'1px solid rgba(241,196,15,0.08)',display:'flex',gap:8,flexShrink:0}}>
         <input value={text} onChange={e=>setText(e.target.value)} onKeyDown={e=>{if(e.key==='Enter') handleSend()}}
           placeholder="Ketik pesan..." maxLength={120}
-          style={{ flex:1,borderRadius:8,padding:'8px 12px',fontSize:12,background:'rgba(0,0,0,0.5)',
+          style={{flex:1,borderRadius:8,padding:'8px 12px',fontSize:12,background:'rgba(0,0,0,0.5)',
             border:'1px solid rgba(241,196,15,0.15)',color:'#fff',outline:'none',
-            fontFamily:'system-ui,sans-serif',transition:'border-color 0.2s' }}
+            fontFamily:'system-ui,sans-serif',transition:'border-color 0.2s'}}
           onFocus={e=>e.target.style.borderColor='rgba(241,196,15,0.4)'}
-          onBlur={e=>e.target.style.borderColor='rgba(241,196,15,0.15)'}
-        />
+          onBlur={e=>e.target.style.borderColor='rgba(241,196,15,0.15)'}/>
         <motion.button type="button" onClick={handleSend} whileHover={{scale:1.08}} whileTap={{scale:0.92}}
-          style={{ width:36,height:36,borderRadius:8,border:'none',cursor:'pointer',fontSize:14,
+          style={{width:36,height:36,borderRadius:8,border:'none',cursor:'pointer',fontSize:14,
             background:'linear-gradient(135deg,#5b1fa0,#8e44ad)',color:'#fff',
-            boxShadow:'0 0 12px rgba(142,68,173,0.4)',flexShrink:0 }}>↑</motion.button>
+            boxShadow:'0 0 14px rgba(142,68,173,0.5)',flexShrink:0}}>↑</motion.button>
       </div>
     </div>
   )
@@ -227,134 +347,135 @@ function WaitingRoom({ room, players, userId, isHost, onStart, onLeave, setReady
   }
 
   return (
-    <div style={{ display:'flex',flexDirection:'column',gap:0,height:'100%' }}>
+    <div style={{display:'flex',flexDirection:'column',gap:0,height:'100%'}}>
       <AnimatePresence>
         {showChat&&(
           <motion.div initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} exit={{opacity:0,y:20}}
-            style={{ position:'fixed',inset:0,zIndex:50,background:'rgba(0,0,0,0.97)',display:'flex',flexDirection:'column' }}>
-            <div style={{ flex:1,overflow:'hidden' }}>
+            style={{position:'fixed',inset:0,zIndex:50,background:'rgba(0,0,0,0.97)',display:'flex',flexDirection:'column'}}>
+            <div style={{flex:1,overflow:'hidden'}}>
               <ChatPanel messages={messages} onSend={onSendMessage} username={username} onClose={()=>setShowChat(false)}/>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      <div style={{ display:'grid',gap:20, gridTemplateColumns:'1fr' }} className="lg-grid-chat">
-        <div style={{ display:'flex',flexDirection:'column',gap:18 }}>
+      <div style={{display:'grid',gap:20,gridTemplateColumns:'1fr'}} className="lg-grid-chat">
+        <div style={{display:'flex',flexDirection:'column',gap:18}}>
 
           {/* Header */}
           <div>
-            <p style={{ fontSize:9,textTransform:'uppercase',letterSpacing:'0.4em',color:'rgba(241,196,15,0.4)',fontFamily:'Cinzel,serif',marginBottom:6 }}>Multiplayer</p>
-            <h2 style={{ fontFamily:'Cinzel Decorative,Georgia,serif',fontSize:26,color:'#F1C40F',
-              textShadow:'0 0 20px rgba(241,196,15,0.4),0 0 40px rgba(241,196,15,0.15)',margin:0,letterSpacing:'0.03em' }}>Ruang Tunggu</h2>
+            <p style={{fontSize:9,textTransform:'uppercase',letterSpacing:'0.4em',color:'rgba(241,196,15,0.4)',fontFamily:'Cinzel,serif',marginBottom:6}}>Multiplayer</p>
+            <h2 style={{fontFamily:'Cinzel Decorative,Georgia,serif',fontSize:26,color:'#F1C40F',
+              textShadow:'0 0 24px rgba(241,196,15,0.6),0 0 48px rgba(241,196,15,0.2)',margin:0,letterSpacing:'0.03em'}}>Ruang Tunggu</h2>
           </div>
 
           {/* Room code card */}
-          <div style={{ borderRadius:18,padding:'18px 22px',
-            background:'linear-gradient(145deg,rgba(5,2,15,0.95),rgba(12,5,30,0.9))',
-            border:'1px solid rgba(241,196,15,0.2)',
-            boxShadow:'0 8px 32px rgba(0,0,0,0.4), inset 0 0 30px rgba(241,196,15,0.02)',
-            position:'relative',overflow:'hidden' }}>
-            {/* Shimmer */}
+          <div style={{borderRadius:18,padding:'18px 22px',
+            background:'linear-gradient(145deg,rgba(5,2,15,0.97),rgba(12,5,30,0.92))',
+            border:'1px solid rgba(241,196,15,0.22)',
+            boxShadow:'0 8px 32px rgba(0,0,0,0.4),inset 0 0 30px rgba(241,196,15,0.02)',
+            position:'relative',overflow:'hidden'}}>
             <motion.div animate={{x:['-100%','200%']}} transition={{duration:3,repeat:Infinity,delay:2}}
               style={{position:'absolute',top:0,left:0,right:0,height:1,
-                background:'linear-gradient(90deg,transparent,rgba(241,196,15,0.5),transparent)'}}/>
-            <p style={{ fontSize:9,color:'rgba(241,196,15,0.4)',marginBottom:12,fontFamily:'Cinzel,serif',letterSpacing:'0.2em',textTransform:'uppercase' }}>Kode Room</p>
-            <div style={{ display:'flex',alignItems:'center',gap:14,flexWrap:'wrap' }}>
-              <p style={{ fontFamily:'Cinzel Decorative,Georgia,serif',fontSize:38,letterSpacing:'0.5em',color:'#F1C40F',
-                textShadow:'0 0 24px rgba(241,196,15,0.5)',margin:0 }}>{room.room_code}</p>
+                background:'linear-gradient(90deg,transparent,rgba(241,196,15,0.6),transparent)'}}/>
+            <div style={{position:'absolute',top:0,right:0,width:60,height:60,pointerEvents:'none',
+              background:'radial-gradient(circle at 100% 0%,rgba(241,196,15,0.06),transparent 70%)'}}/>
+            <p style={{fontSize:9,color:'rgba(241,196,15,0.4)',marginBottom:12,fontFamily:'Cinzel,serif',letterSpacing:'0.2em',textTransform:'uppercase'}}>Kode Room</p>
+            <div style={{display:'flex',alignItems:'center',gap:14,flexWrap:'wrap'}}>
+              <p style={{fontFamily:'Cinzel Decorative,Georgia,serif',fontSize:38,letterSpacing:'0.5em',color:'#F1C40F',
+                textShadow:'0 0 28px rgba(241,196,15,0.6)',margin:0}}>{room.room_code}</p>
               <motion.button type="button" onClick={handleCopy} whileHover={{scale:1.05}} whileTap={{scale:0.95}}
-                style={{ borderRadius:10,padding:'7px 16px',fontSize:11,fontWeight:700,cursor:'pointer',
+                style={{borderRadius:10,padding:'7px 16px',fontSize:11,fontWeight:700,cursor:'pointer',
                   fontFamily:'Cinzel,serif',letterSpacing:'0.08em',
                   background:copied?'rgba(39,174,96,0.2)':'rgba(241,196,15,0.1)',
                   color:copied?'#27ae60':'rgba(241,196,15,0.8)',
-                  border:`1px solid ${copied?'rgba(39,174,96,0.4)':'rgba(241,196,15,0.2)'}`,
-                  transition:'all 0.2s' }}>
+                  border:`1px solid ${copied?'rgba(39,174,96,0.4)':'rgba(241,196,15,0.22)'}`,
+                  transition:'all 0.2s'}}>
                 {copied?'✓ Tersalin':'Salin'}
               </motion.button>
             </div>
             <div style={{display:'flex',alignItems:'center',gap:8,marginTop:10}}>
               <div style={{flex:1,height:3,borderRadius:9999,background:'rgba(255,255,255,0.06)',overflow:'hidden'}}>
                 <motion.div animate={{width:`${(players.length/room.max_players)*100}%`}} transition={{duration:0.5}}
-                  style={{height:'100%',background:'linear-gradient(90deg,rgba(241,196,15,0.4),rgba(241,196,15,0.7))',borderRadius:9999}}/>
+                  style={{height:'100%',background:'linear-gradient(90deg,rgba(241,196,15,0.4),rgba(241,196,15,0.8))',borderRadius:9999,
+                    boxShadow:'0 0 8px rgba(241,196,15,0.3)'}}/>
               </div>
-              <p style={{ fontSize:10,color:'rgba(255,255,255,0.3)',fontFamily:'Cinzel,serif' }}>{players.length}/{room.max_players}</p>
+              <p style={{fontSize:10,color:'rgba(255,255,255,0.3)',fontFamily:'Cinzel,serif'}}>{players.length}/{room.max_players}</p>
             </div>
           </div>
 
           {/* Players list */}
-          <div style={{ display:'flex',flexDirection:'column',gap:8 }}>
-            <p style={{ fontSize:9,textTransform:'uppercase',letterSpacing:'0.3em',color:'rgba(241,196,15,0.35)',fontFamily:'Cinzel,serif',margin:0 }}>Pemain</p>
+          <div style={{display:'flex',flexDirection:'column',gap:8}}>
+            <p style={{fontSize:9,textTransform:'uppercase',letterSpacing:'0.3em',color:'rgba(241,196,15,0.35)',fontFamily:'Cinzel,serif',margin:0}}>Pemain</p>
             {players.map((p,i)=>(
               <motion.div key={p.id||p.user_id} initial={{opacity:0,x:-16}} animate={{opacity:1,x:0}} transition={{delay:i*0.08}}
-                style={{ display:'flex',alignItems:'center',gap:12,borderRadius:14,padding:'11px 15px',
-                  background:'linear-gradient(135deg,rgba(5,2,15,0.9),rgba(12,5,30,0.85))',
-                  border:`1px solid ${p.user_id===room.host_id?'rgba(241,196,15,0.25)':'rgba(255,255,255,0.06)'}`,
-                  boxShadow:p.user_id===room.host_id?'0 4px 20px rgba(241,196,15,0.08)':'none' }}>
-                <div style={{ width:34,height:34,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,
+                style={{display:'flex',alignItems:'center',gap:12,borderRadius:14,padding:'11px 15px',
+                  background:'linear-gradient(135deg,rgba(5,2,15,0.92),rgba(12,5,30,0.88))',
+                  border:`1px solid ${p.user_id===room.host_id?'rgba(241,196,15,0.28)':'rgba(255,255,255,0.06)'}`,
+                  boxShadow:p.user_id===room.host_id?'0 4px 20px rgba(241,196,15,0.08)':'none'}}>
+                <div style={{width:34,height:34,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,
                   background:p.user_id===room.host_id?'linear-gradient(135deg,rgba(180,130,0,0.4),rgba(241,196,15,0.3))':'rgba(255,255,255,0.05)',
-                  border:p.user_id===room.host_id?'1px solid rgba(241,196,15,0.4)':'1px solid rgba(255,255,255,0.08)' }}>
+                  border:p.user_id===room.host_id?'1px solid rgba(241,196,15,0.4)':'1px solid rgba(255,255,255,0.08)'}}>
                   {p.user_id===room.host_id?'👑':'🧑'}
                 </div>
-                <p style={{ flex:1,fontSize:13,fontWeight:600,color:'rgba(255,255,255,0.85)',margin:0,fontFamily:'Cinzel,serif',letterSpacing:'0.03em' }}>{p.username}</p>
+                <p style={{flex:1,fontSize:13,fontWeight:600,color:'rgba(255,255,255,0.85)',margin:0,fontFamily:'Cinzel,serif',letterSpacing:'0.03em'}}>{p.username}</p>
                 {p.user_id===room.host_id
-                  ?<span style={{ fontSize:9,color:'rgba(241,196,15,0.55)',textTransform:'uppercase',letterSpacing:'0.15em',fontFamily:'Cinzel,serif' }}>Host</span>
-                  :<span style={{ fontSize:11,fontWeight:700,color:p.is_ready?'#27ae60':'rgba(255,255,255,0.25)',
-                    fontFamily:'Cinzel,serif',letterSpacing:'0.05em' }}>{p.is_ready?'✓ Siap':'Menunggu'}</span>
+                  ?<span style={{fontSize:9,color:'rgba(241,196,15,0.55)',textTransform:'uppercase',letterSpacing:'0.15em',fontFamily:'Cinzel,serif'}}>Host</span>
+                  :<span style={{fontSize:11,fontWeight:700,color:p.is_ready?'#27ae60':'rgba(255,255,255,0.25)',fontFamily:'Cinzel,serif',letterSpacing:'0.05em'}}>{p.is_ready?'✓ Siap':'Menunggu'}</span>
                 }
               </motion.div>
             ))}
             {Array.from({length:Math.max(0,room.max_players-players.length)}).map((_,i)=>(
-              <div key={`empty-${i}`} style={{ display:'flex',alignItems:'center',gap:12,borderRadius:14,padding:'11px 15px',
-                background:'rgba(0,0,0,0.2)',border:'1px dashed rgba(255,255,255,0.06)' }}>
-                <div style={{ width:34,height:34,borderRadius:'50%',background:'rgba(255,255,255,0.03)',border:'1px dashed rgba(255,255,255,0.08)' }}/>
-                <p style={{ fontSize:12,color:'rgba(255,255,255,0.15)',margin:0,fontFamily:'Cinzel,serif',letterSpacing:'0.05em' }}>Menunggu pemain...</p>
+              <div key={`empty-${i}`} style={{display:'flex',alignItems:'center',gap:12,borderRadius:14,padding:'11px 15px',
+                background:'rgba(0,0,0,0.2)',border:'1px dashed rgba(255,255,255,0.06)'}}>
+                <div style={{width:34,height:34,borderRadius:'50%',background:'rgba(255,255,255,0.03)',border:'1px dashed rgba(255,255,255,0.08)'}}/>
+                <p style={{fontSize:12,color:'rgba(255,255,255,0.15)',margin:0,fontFamily:'Cinzel,serif',letterSpacing:'0.05em'}}>Menunggu pemain...</p>
               </div>
             ))}
           </div>
 
           {/* Actions */}
-          <div style={{ display:'flex',gap:10,flexWrap:'wrap' }}>
+          <div style={{display:'flex',gap:10,flexWrap:'wrap'}}>
             {!isHost&&(
-              <motion.button type="button" onClick={()=>setReady({roomId:room.id,userId,isReady:!myPlayer?.is_ready})}
+              <motion.button type="button" onClick={()=>setReady({roomId:room.id,userId:myPlayer?.user_id,isReady:!myPlayer?.is_ready})}
                 whileHover={{scale:1.03}} whileTap={{scale:0.97}}
-                style={{ flex:1,minWidth:120,borderRadius:12,padding:'12px 0',fontSize:13,fontWeight:700,border:'none',cursor:'pointer',
+                style={{flex:1,minWidth:120,borderRadius:12,padding:'12px 0',fontSize:13,fontWeight:700,border:'none',cursor:'pointer',
                   fontFamily:'Cinzel,serif',letterSpacing:'0.08em',
                   background:myPlayer?.is_ready?'linear-gradient(135deg,rgba(27,120,60,0.4),rgba(39,174,96,0.3))':'linear-gradient(135deg,#4a1080,#8e44ad)',
                   color:'#fff',
-                  boxShadow:myPlayer?.is_ready?'0 0 20px rgba(39,174,96,0.3)':'0 0 20px rgba(142,68,173,0.4)' }}>
+                  boxShadow:myPlayer?.is_ready?'0 0 20px rgba(39,174,96,0.35)':'0 0 24px rgba(142,68,173,0.45)'}}>
                 {myPlayer?.is_ready?'✓ Siap':'Tandai Siap'}
               </motion.button>
             )}
             {isHost&&(
               <motion.button type="button" onClick={onStart} disabled={players.length<2}
                 whileHover={players.length>=2?{scale:1.03}:{}} whileTap={players.length>=2?{scale:0.97}:{}}
-                style={{ flex:1,minWidth:120,borderRadius:12,padding:'12px 0',fontSize:13,fontWeight:700,border:'none',
+                style={{flex:1,minWidth:120,borderRadius:12,padding:'12px 0',fontSize:13,fontWeight:700,border:'none',
                   cursor:players.length<2?'not-allowed':'pointer',
                   fontFamily:'Cinzel,serif',letterSpacing:'0.08em',
                   background:players.length<2?'rgba(255,255,255,0.04)':'linear-gradient(135deg,#8b1515,#a93226,#e74c3c)',
                   color:players.length<2?'rgba(255,255,255,0.2)':'#fff',
-                  boxShadow:players.length<2?'none':'0 0 28px rgba(192,57,43,0.5)' }}>
+                  boxShadow:players.length<2?'none':'0 0 28px rgba(192,57,43,0.55)'}}>
                 {players.length<2?'Tunggu Pemain...':'🚀 Mulai Game'}
               </motion.button>
             )}
             <motion.button type="button" onClick={()=>setShowChat(true)} whileHover={{scale:1.03}} whileTap={{scale:0.97}}
-              style={{ borderRadius:12,padding:'12px 18px',fontSize:13,fontWeight:600,cursor:'pointer',
+              style={{borderRadius:12,padding:'12px 18px',fontSize:13,fontWeight:600,cursor:'pointer',
                 fontFamily:'Cinzel,serif',letterSpacing:'0.05em',
-                border:'1px solid rgba(241,196,15,0.25)',background:'rgba(241,196,15,0.07)',color:'rgba(241,196,15,0.75)' }}>
+                border:'1px solid rgba(241,196,15,0.25)',background:'rgba(241,196,15,0.07)',color:'rgba(241,196,15,0.75)'}}>
               💬 {messages.length>0?`(${messages.length})`:'Chat'}
             </motion.button>
             <motion.button type="button" onClick={onLeave} whileHover={{scale:1.03}} whileTap={{scale:0.97}}
-              style={{ borderRadius:12,padding:'12px 18px',fontSize:13,fontWeight:600,cursor:'pointer',
+              style={{borderRadius:12,padding:'12px 18px',fontSize:13,fontWeight:600,cursor:'pointer',
                 border:'1px solid rgba(192,57,43,0.35)',background:'rgba(192,57,43,0.07)',color:'rgba(192,57,43,0.8)',
-                fontFamily:'Cinzel,serif',letterSpacing:'0.05em' }}>
+                fontFamily:'Cinzel,serif',letterSpacing:'0.05em'}}>
               Keluar
             </motion.button>
           </div>
         </div>
 
         {/* Desktop chat */}
-        <div className="chat-desktop-only" style={{ borderRadius:18,overflow:'hidden',background:'rgba(0,0,0,0.6)',border:'1px solid rgba(241,196,15,0.1)',minHeight:400 }}>
+        <div className="chat-desktop-only" style={{borderRadius:18,overflow:'hidden',background:'rgba(0,0,0,0.6)',border:'1px solid rgba(241,196,15,0.1)',minHeight:400}}>
           <ChatPanel messages={messages} onSend={onSendMessage} username={username}/>
         </div>
       </div>
@@ -381,6 +502,10 @@ export function MultiplayerGamePage() {
   const statsUpdated=useRef(false)
   const prevHandRef=useRef([])
 
+  // ── Notification state (setara Game.jsx)
+  const [pairInfo,setPairInfo]=useState(null)   // { rank }
+  const [jokerInfo,setJokerInfo]=useState(null) // truthy
+
   const room=liveRoom||initRoom
 
   useEffect(()=>{
@@ -391,6 +516,7 @@ export function MultiplayerGamePage() {
   useEffect(()=>{ if(initRoom?.id) subscribeToRoom(initRoom.id) },[initRoom?.id])
   useEffect(()=>{ if(gameState){ setLocalGameState(gameState); statsUpdated.current=false } },[gameState])
 
+  // Hand order tracking
   useEffect(()=>{
     const myPlayer=localGameState?.players?.find(p=>p.id===user?.id)
     const hand=myPlayer?.hand||[]
@@ -411,6 +537,7 @@ export function MultiplayerGamePage() {
     prevHandRef.current=newIds
   },[localGameState?.players])
 
+  // Stats update
   useEffect(()=>{
     if(localGameState?.status!=='finished'||!user||statsUpdated.current) return
     statsUpdated.current=true
@@ -426,6 +553,10 @@ export function MultiplayerGamePage() {
         }).eq('id',user.id).then(()=>refreshProfile())
       })
   },[localGameState?.status, user])
+
+  // Auto-clear pair/joker anim
+  useEffect(()=>{ if(!pairInfo) return; const t=setTimeout(()=>setPairInfo(null),1000); return ()=>clearTimeout(t) },[pairInfo])
+  useEffect(()=>{ if(!jokerInfo) return; const t=setTimeout(()=>setJokerInfo(null),1200); return ()=>clearTimeout(t) },[jokerInfo])
 
   if(!room||!user){ navigate('/lobby'); return null }
 
@@ -451,6 +582,7 @@ export function MultiplayerGamePage() {
     await leaveRoom({roomId:room.id,userId:user.id,isHost})
     navigate('/')
   }
+
   const handleDraw=async()=>{
     if(!isMyTurn||selectedIndex==null||!localGameState) return
     const state=localGameState
@@ -459,17 +591,30 @@ export function MultiplayerGamePage() {
     const newPlayers=state.players.map(p=>({...p,hand:[...p.hand]}))
     const src=newPlayers[neighbor], tgt=newPlayers[state.current]
     const [card]=src.hand.splice(selectedIndex,1)
+    const beforeHand=[...tgt.hand]
     tgt.hand.push(card)
+
+    // ── Detect pair / joker untuk notifikasi
+    const gotJoker=card.rank==='JOKER'
+    const gotPair=!gotJoker&&beforeHand.some(c=>c.rank===card.rank)
+
     tgt.hand=removePairs(tgt.hand)
     for(let i=0;i<newPlayers.length;i++){if(newPlayers[i].hand.length===0)newPlayers[i].out=true}
     const stillActive=newPlayers.filter(p=>!p.out&&p.hand.length>0)
     const newState=stillActive.length===1
       ?{...state,players:newPlayers,status:'finished',loserIndex:newPlayers.findIndex(p=>p.id===stillActive[0].id)}
       :{...state,players:newPlayers,current:nextActiveLeft(newPlayers,state.current)}
+
     setLocalGameState(newState)
     setSelectedIndex(null)
+
+    // Trigger notif
+    if(gotJoker) setJokerInfo(true)
+    else if(gotPair) setPairInfo({ rank: card.rank })
+
     await updateGameState({roomId:room.id,state:newState})
   }
+
   const handleShuffle=()=>{
     if(!me) return
     const shuffled=shuffle(me.hand)
@@ -483,9 +628,9 @@ export function MultiplayerGamePage() {
   if(!localGameState||room.status==='waiting'){
     return (
       <div style={{
-        minHeight: '100vh',
-        background: 'radial-gradient(ellipse at 30% 20%, rgba(20,5,50,0.95), rgba(5,2,15,1) 60%, rgba(0,0,0,1))',
-        padding: isMobile?'16px':'24px',
+        minHeight:'100vh',
+        background:'radial-gradient(ellipse at 30% 20%,rgba(20,5,50,0.97),rgba(5,2,15,1) 60%,rgba(0,0,0,1))',
+        padding:isMobile?'16px':'24px',
       }}>
         <style>{`
           ${mpStyles}
@@ -508,123 +653,155 @@ export function MultiplayerGamePage() {
   return (
     <>
       <style>{mpStyles}</style>
-      <section style={{ position:'relative',display:'flex',flexDirection:'column',gap:0,minHeight:500 }}>
+      <section style={{position:'relative',display:'flex',flexDirection:'column',gap:0,minHeight:500}}>
 
         {/* Rich felt bg */}
-        <div style={{ position:'absolute',inset:0,borderRadius:20,overflow:'hidden',pointerEvents:'none',zIndex:0,
-          background:'radial-gradient(ellipse at 40% 30%,rgba(18,55,28,0.95) 0%,rgba(6,25,12,0.98) 55%,rgba(0,0,0,1) 100%)' }}>
-          <div style={{position:'absolute',inset:0,opacity:0.05,
-            backgroundImage:'radial-gradient(circle at 50% 50%,rgba(255,255,255,0.1) 1px,transparent 1px)',
-            backgroundSize:'10px 10px'}}/>
-          <div style={{position:'absolute',inset:10,borderRadius:14,border:'2px solid rgba(241,196,15,0.15)',
+        <div style={{position:'absolute',inset:0,borderRadius:20,overflow:'hidden',pointerEvents:'none',zIndex:0,
+          background:'radial-gradient(ellipse at 40% 30%,rgba(18,55,28,0.97) 0%,rgba(6,25,12,0.99) 55%,rgba(0,0,0,1) 100%)'}}>
+          <div style={{position:'absolute',inset:0,opacity:0.06,
+            backgroundImage:'radial-gradient(circle at 50% 50%,rgba(255,255,255,0.1) 1px,transparent 1px)',backgroundSize:'10px 10px'}}/>
+          <div style={{position:'absolute',inset:10,borderRadius:14,border:'2px solid rgba(241,196,15,0.18)',
             boxShadow:'inset 0 0 80px rgba(0,0,0,0.6)'}}/>
-          <div style={{position:'absolute',inset:14,borderRadius:12,border:'1px solid rgba(241,196,15,0.05)'}}/>
+          <div style={{position:'absolute',inset:14,borderRadius:12,border:'1px solid rgba(241,196,15,0.06)'}}/>
           <div style={{position:'absolute',top:'40%',left:'50%',transform:'translate(-50%,-50%)',
-            width:350,height:250,
-            background:'radial-gradient(ellipse,rgba(25,90,45,0.2) 0%,transparent 70%)',
+            width:400,height:280,
+            background:'radial-gradient(ellipse,rgba(25,90,45,0.25) 0%,transparent 70%)',
             animation:'mp-orbFloat 7s ease-in-out infinite'}}/>
+          {/* Secondary orb */}
+          <div style={{position:'absolute',top:'70%',left:'20%',width:280,height:180,
+            background:'radial-gradient(ellipse,rgba(241,196,15,0.04) 0%,transparent 70%)',
+            animation:'mp-orbFloat 9s ease-in-out infinite reverse',pointerEvents:'none'}}/>
+          {/* Animated shimmer top border */}
+          <motion.div animate={{x:['-100%','200%']}} transition={{duration:5,repeat:Infinity,ease:'linear'}}
+            style={{position:'absolute',top:10,left:10,right:10,height:1,
+              background:'linear-gradient(90deg,transparent,rgba(241,196,15,0.45),transparent)',borderRadius:14}}/>
+          {/* Corner ornaments */}
+          {[{top:18,left:18},{top:18,right:18},{bottom:18,left:18},{bottom:18,right:18}].map((pos,i)=>(
+            <div key={i} style={{position:'absolute',...pos,width:20,height:20,opacity:0.25,
+              background:`linear-gradient(45deg,transparent 40%,rgba(241,196,15,0.8) 40%,rgba(241,196,15,0.8) 60%,transparent 60%),
+                linear-gradient(-45deg,transparent 40%,rgba(241,196,15,0.8) 40%,rgba(241,196,15,0.8) 60%,transparent 60%)`}}/>
+          ))}
         </div>
+
+        {/* ── PAIR NOTIFICATION ── */}
+        <AnimatePresence>
+          {pairInfo && <PairAnimation pairRank={pairInfo.rank}/>}
+        </AnimatePresence>
+
+        {/* ── JOKER NOTIFICATION ── */}
+        <AnimatePresence>
+          {jokerInfo && <JokerAnimation/>}
+        </AnimatePresence>
 
         {/* Chat overlay mobile */}
         <AnimatePresence>
           {chatOpen&&(
             <motion.div initial={{opacity:0,x:'100%'}} animate={{opacity:1,x:0}} exit={{opacity:0,x:'100%'}}
-              style={{ position:'fixed',inset:0,zIndex:50,display:'flex',flexDirection:'column' }}>
+              style={{position:'fixed',inset:0,zIndex:50,display:'flex',flexDirection:'column'}}>
               <ChatPanel messages={messages} onSend={handleSendMessage} username={username} onClose={()=>setChatOpen(false)}/>
             </motion.div>
           )}
         </AnimatePresence>
 
-        <div style={{ position:'relative',zIndex:1,display:'grid',gap:0,
-          gridTemplateColumns: !isMobile&&chatOpen ? '1fr 270px' : '1fr' }}>
+        <div style={{position:'relative',zIndex:1,display:'grid',gap:0,
+          gridTemplateColumns:!isMobile&&chatOpen?'1fr 270px':'1fr'}}>
 
           {/* Game area */}
-          <div style={{ display:'flex',flexDirection:'column',gap:isMobile?12:16,padding:isMobile?'12px 10px':'20px 24px' }}>
+          <div style={{display:'flex',flexDirection:'column',gap:isMobile?12:16,padding:isMobile?'12px 10px':'20px 24px'}}>
 
             {/* Header */}
-            <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',gap:8,flexWrap:'wrap' }}>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8,flexWrap:'wrap'}}>
               <div>
                 <div style={{display:'flex',alignItems:'baseline',gap:8}}>
-                  <h1 style={{ fontFamily:'Cinzel Decorative,Georgia,serif',fontSize:isMobile?18:22,color:'#F1C40F',
-                    textShadow:'0 0 20px rgba(241,196,15,0.5)',lineHeight:1,margin:0,letterSpacing:'0.03em' }}>
+                  <h1 style={{fontFamily:'Cinzel Decorative,Georgia,serif',fontSize:isMobile?18:22,color:'#F1C40F',
+                    textShadow:'0 0 24px rgba(241,196,15,0.7),0 0 48px rgba(241,196,15,0.25)',lineHeight:1,margin:0,letterSpacing:'0.03em'}}>
                     Kartu Batak
                   </h1>
                   <span style={{fontSize:8,color:'rgba(241,196,15,0.3)',letterSpacing:'0.25em',textTransform:'uppercase',fontFamily:'Cinzel,serif'}}>Multi</span>
                 </div>
                 <div style={{display:'flex',alignItems:'center',gap:6,marginTop:4}}>
-                  <div style={{width:5,height:5,borderRadius:'50%',background:'rgba(39,174,96,0.7)',boxShadow:'0 0 6px rgba(39,174,96,0.5)'}}/>
-                  <p style={{ fontSize:9,color:'rgba(241,196,15,0.35)',fontFamily:'Cinzel,serif',letterSpacing:'0.1em' }}>Room: {room.room_code}</p>
+                  <motion.div style={{width:5,height:5,borderRadius:'50%',background:'rgba(39,174,96,0.7)'}}
+                    animate={{boxShadow:['0 0 4px rgba(39,174,96,0.4)','0 0 10px rgba(39,174,96,0.8)','0 0 4px rgba(39,174,96,0.4)']}}
+                    transition={{duration:2,repeat:Infinity}}/>
+                  <p style={{fontSize:9,color:'rgba(241,196,15,0.35)',fontFamily:'Cinzel,serif',letterSpacing:'0.1em'}}>Room: {room.room_code}</p>
                 </div>
               </div>
-              <div style={{ display:'flex',gap:8,alignItems:'center',flexWrap:'wrap' }}>
+              <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
                 <AnimatePresence mode="wait">
                   <motion.div key={currentPlayer?.id} initial={{opacity:0,x:8,scale:0.9}} animate={{opacity:1,x:0,scale:1}}
-                    style={{ borderRadius:10,padding:isMobile?'5px 10px':'6px 14px',fontSize:isMobile?10:11,fontWeight:700,
+                    style={{borderRadius:10,padding:isMobile?'5px 10px':'6px 14px',fontSize:isMobile?10:11,fontWeight:700,
                       fontFamily:'Cinzel,serif',letterSpacing:'0.05em',
-                      background:isMyTurn?'linear-gradient(135deg,rgba(241,196,15,0.12),rgba(241,196,15,0.05))':'rgba(0,0,0,0.5)',
-                      border:isMyTurn?'1px solid rgba(241,196,15,0.45)':'1px solid rgba(255,255,255,0.06)',
+                      background:isMyTurn?'linear-gradient(135deg,rgba(241,196,15,0.15),rgba(241,196,15,0.05))':'rgba(0,0,0,0.5)',
+                      border:isMyTurn?'1px solid rgba(241,196,15,0.5)':'1px solid rgba(255,255,255,0.06)',
                       color:isMyTurn?'#F1C40F':'rgba(255,255,255,0.35)',
-                      boxShadow:isMyTurn?'0 0 16px rgba(241,196,15,0.2)':'none',
-                      animation:isMyTurn?'mp-pulse-border 1.5s ease-in-out infinite':'none' }}>
+                      boxShadow:isMyTurn?'0 0 18px rgba(241,196,15,0.25),inset 0 0 10px rgba(241,196,15,0.04)':'none',
+                      animation:isMyTurn?'mp-pulse-border 1.5s ease-in-out infinite':'none'}}>
                     {isMyTurn?'⚡ Giliranmu!':`⏳ ${currentPlayer?.name}...`}
                   </motion.div>
                 </AnimatePresence>
                 <motion.button type="button" onClick={()=>setChatOpen(o=>!o)}
                   whileHover={{scale:1.05}} whileTap={{scale:0.95}}
-                  style={{ borderRadius:9,padding:isMobile?'5px 10px':'6px 12px',fontSize:isMobile?10:11,fontWeight:600,cursor:'pointer',
+                  style={{borderRadius:9,padding:isMobile?'5px 10px':'6px 12px',fontSize:isMobile?10:11,fontWeight:600,cursor:'pointer',
                     fontFamily:'Cinzel,serif',
                     background:chatOpen?'rgba(142,68,173,0.2)':'rgba(0,0,0,0.5)',
-                    border:chatOpen?'1px solid rgba(142,68,173,0.4)':'1px solid rgba(241,196,15,0.15)',
-                    color:chatOpen?'rgba(200,150,255,0.8)':'rgba(241,196,15,0.55)',
-                    transition:'all 0.2s' }}>
+                    border:chatOpen?'1px solid rgba(142,68,173,0.45)':'1px solid rgba(241,196,15,0.15)',
+                    color:chatOpen?'rgba(200,150,255,0.85)':'rgba(241,196,15,0.55)',
+                    transition:'all 0.2s'}}>
                   {chatOpen?'✕ Chat':messages.length>0?`💬 (${messages.length})`:'💬 Chat'}
                 </motion.button>
               </div>
             </div>
 
             {/* Divider */}
-            <div style={{height:1,background:'linear-gradient(90deg,transparent,rgba(241,196,15,0.25),rgba(241,196,15,0.08),transparent)'}}/>
+            <div style={{height:1,background:'linear-gradient(90deg,transparent,rgba(241,196,15,0.3),rgba(241,196,15,0.08),transparent)'}}/>
 
             {/* Opponents */}
-            <div style={{ display:'flex',gap:8,flexWrap:'wrap',justifyContent:'center' }}>
+            <div style={{display:'flex',gap:8,flexWrap:'wrap',justifyContent:'center'}}>
               {localGameState.players.filter(p=>p.id!==user.id).map(p=>{
                 const isCurrent=currentPlayer?.id===p.id
                 return (
                   <motion.div key={p.id}
                     animate={{
-                      boxShadow:isCurrent?'0 0 35px rgba(241,196,15,0.4),0 0 70px rgba(241,196,15,0.1)':'0 4px 20px rgba(0,0,0,0.5)',
-                      borderColor:isCurrent?'rgba(241,196,15,0.7)':'rgba(241,196,15,0.1)'
+                      boxShadow:isCurrent?'0 0 45px rgba(241,196,15,0.5),0 0 90px rgba(241,196,15,0.12)':'0 4px 20px rgba(0,0,0,0.5)',
+                      borderColor:isCurrent?'rgba(241,196,15,0.75)':'rgba(241,196,15,0.1)',
+                      scale:isCurrent?1.03:1,
                     }}
-                    style={{ borderRadius:16,padding:isMobile?'10px 12px':'12px 16px',
-                      background:'linear-gradient(145deg,rgba(5,2,15,0.95),rgba(15,5,35,0.9))',
+                    style={{borderRadius:16,padding:isMobile?'10px 12px':'12px 16px',
+                      background:'linear-gradient(145deg,rgba(5,2,15,0.97),rgba(15,5,35,0.92))',
                       border:'1px solid rgba(241,196,15,0.1)',
                       textAlign:'center',minWidth:isMobile?80:106,flex:isMobile?'1 1 80px':'0 0 auto',
-                      position:'relative',overflow:'hidden' }}>
+                      position:'relative',overflow:'hidden'}}>
                     {isCurrent&&(
                       <motion.div animate={{x:['-100%','200%']}} transition={{duration:1.5,repeat:Infinity,ease:'linear'}}
                         style={{position:'absolute',top:0,left:0,right:0,height:1,
-                          background:'linear-gradient(90deg,transparent,rgba(241,196,15,0.7),transparent)'}}/>
+                          background:'linear-gradient(90deg,transparent,rgba(241,196,15,0.8),transparent)'}}/>
                     )}
-                    <div style={{ fontSize:isMobile?16:20,marginBottom:5,
-                      filter:p.out?'grayscale(1) opacity(0.4)':'none' }}>
+                    {isCurrent&&(
+                      <div style={{position:'absolute',inset:0,borderRadius:16,pointerEvents:'none',
+                        background:'radial-gradient(circle at 50% 0%,rgba(241,196,15,0.06),transparent 70%)'}}/>
+                    )}
+                    <div style={{fontSize:isMobile?16:20,marginBottom:5,filter:p.out?'grayscale(1) opacity(0.35)':'none'}}>
                       {p.out?'😌':'🧑'}
                     </div>
-                    <p style={{ fontFamily:'Cinzel,serif',fontSize:isMobile?10:11,
-                      color:p.out?'rgba(241,196,15,0.25)':'#F1C40F',margin:0,letterSpacing:'0.03em',
-                      fontWeight:600 }}>{p.name}</p>
+                    <p style={{fontFamily:'Cinzel,serif',fontSize:isMobile?10:11,
+                      color:p.out?'rgba(241,196,15,0.22)':isCurrent?'#F1C40F':'rgba(241,196,15,0.7)',
+                      margin:0,letterSpacing:'0.03em',fontWeight:600,
+                      textShadow:isCurrent?'0 0 10px rgba(241,196,15,0.5)':'none'}}>{p.name}</p>
                     {p.out?(
-                      <p style={{ fontSize:9,color:'rgba(39,174,96,0.5)',marginTop:3,fontFamily:'Cinzel,serif' }}>✓ Selamat</p>
+                      <p style={{fontSize:9,color:'rgba(39,174,96,0.6)',marginTop:3,fontFamily:'Cinzel,serif'}}>✓ Selamat</p>
                     ):(
                       <>
-                        <div style={{ display:'flex',justifyContent:'center',marginTop:6,alignItems:'flex-end' }}>
+                        <div style={{display:'flex',justifyContent:'center',marginTop:6,alignItems:'flex-end'}}>
                           {p.hand.slice(0,isMobile?4:5).map((_,i)=>(
                             <div key={i} style={{marginLeft:i===0?0:-12,transform:`rotate(${(i-2)*4}deg)`,transformOrigin:'bottom center'}}>
                               <CardBack size="sm"/>
                             </div>
                           ))}
                         </div>
-                        <div style={{marginTop:5,borderRadius:9999,padding:'2px 8px',background:'rgba(0,0,0,0.35)',display:'inline-block'}}>
-                          <p style={{ fontSize:9,color:'rgba(241,196,15,0.35)',fontFamily:'Cinzel,serif' }}>{p.hand.length} kartu</p>
+                        <div style={{marginTop:5,borderRadius:9999,padding:'2px 8px',
+                          background:isCurrent?'rgba(241,196,15,0.07)':'rgba(0,0,0,0.35)',display:'inline-block',
+                          border:isCurrent?'1px solid rgba(241,196,15,0.18)':'none',transition:'all 0.3s'}}>
+                          <p style={{fontSize:9,color:isCurrent?'rgba(241,196,15,0.6)':'rgba(241,196,15,0.3)',fontFamily:'Cinzel,serif'}}>{p.hand.length} kartu</p>
                         </div>
                       </>
                     )}
@@ -632,7 +809,7 @@ export function MultiplayerGamePage() {
                       <div style={{display:'flex',justifyContent:'center',gap:3,marginTop:5}}>
                         {[0,1,2].map(i=>(
                           <motion.div key={i} animate={{y:[0,-4,0]}} transition={{duration:0.5,repeat:Infinity,delay:i*0.15}}
-                            style={{width:3,height:3,borderRadius:'50%',background:'rgba(241,196,15,0.6)'}}/>
+                            style={{width:3,height:3,borderRadius:'50%',background:'rgba(241,196,15,0.7)',boxShadow:'0 0 4px rgba(241,196,15,0.5)'}}/>
                         ))}
                       </div>
                     )}
@@ -643,44 +820,46 @@ export function MultiplayerGamePage() {
 
             {/* Section label */}
             <div style={{display:'flex',alignItems:'center',gap:10}}>
-              <div style={{flex:1,height:1,background:'linear-gradient(90deg,transparent,rgba(241,196,15,0.12))'}}/>
-              <span style={{fontSize:8,color:'rgba(241,196,15,0.25)',letterSpacing:'0.3em',textTransform:'uppercase',fontFamily:'Cinzel,serif'}}>Pilih Kartu</span>
-              <div style={{flex:1,height:1,background:'linear-gradient(90deg,rgba(241,196,15,0.12),transparent)'}}/>
+              <div style={{flex:1,height:1,background:'linear-gradient(90deg,transparent,rgba(241,196,15,0.14))'}}/>
+              <span style={{fontSize:8,color:'rgba(241,196,15,0.28)',letterSpacing:'0.3em',textTransform:'uppercase',fontFamily:'Cinzel,serif'}}>Pilih Kartu</span>
+              <div style={{flex:1,height:1,background:'linear-gradient(90deg,rgba(241,196,15,0.14),transparent)'}}/>
             </div>
 
             {/* Neighbor pick */}
-            <div style={{ display:'flex',flexDirection:'column',alignItems:'center',gap:10 }}>
+            <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:10}}>
               <div style={{
-                display:'flex',alignItems:'center',gap:8,
-                borderRadius:9999,padding:'5px 14px',
-                background:isMyTurn?'rgba(241,196,15,0.06)':'rgba(0,0,0,0.3)',
-                border:isMyTurn?'1px solid rgba(241,196,15,0.2)':'1px solid rgba(255,255,255,0.04)',
+                display:'flex',alignItems:'center',gap:8,borderRadius:9999,padding:'5px 14px',
+                background:isMyTurn?'rgba(241,196,15,0.07)':'rgba(0,0,0,0.3)',
+                border:isMyTurn?'1px solid rgba(241,196,15,0.22)':'1px solid rgba(255,255,255,0.04)',
+                boxShadow:isMyTurn?'0 0 12px rgba(241,196,15,0.1)':'none',
+                transition:'all 0.3s ease',
               }}>
-                <p style={{ fontFamily:'Cinzel,serif',fontSize:isMobile?10:11,
-                  color:isMyTurn?'rgba(241,196,15,0.75)':'rgba(241,196,15,0.35)',
-                  letterSpacing:'0.06em',margin:0 }}>
+                <p style={{fontFamily:'Cinzel,serif',fontSize:isMobile?10:11,
+                  color:isMyTurn?'rgba(241,196,15,0.85)':'rgba(241,196,15,0.35)',
+                  letterSpacing:'0.06em',margin:0}}>
                   {isMyTurn?'👇 Pilih 1 kartu dari lawan':'Kartu pemain di kiri'}
                 </p>
               </div>
-              <div style={{ display:'flex',justifyContent:'center',flexWrap:'wrap',padding:'6px 0' }}>
+              <div style={{display:'flex',justifyContent:'center',flexWrap:'wrap',padding:'6px 0'}}>
                 {neighborPlayer?.hand.map((_,idx)=>(
                   <motion.div key={`n-${idx}`}
-                    style={{ marginLeft:idx===0?0:isMobile?-12:-10, zIndex:selectedIndex===idx?5:1 }}
-                    animate={{y:selectedIndex===idx?-6:0}}>
+                    style={{marginLeft:idx===0?0:isMobile?-12:-10,zIndex:selectedIndex===idx?5:1}}
+                    animate={{y:selectedIndex===idx?-8:0}}>
                     <CardBack size={isMobile?'sm':'md'} selected={selectedIndex===idx} canClick={isMyTurn}
                       onClick={()=>isMyTurn&&setSelectedIndex(idx)}/>
                   </motion.div>
                 ))}
                 {!neighborPlayer&&(
-                  <p style={{ fontSize:11,color:'rgba(241,196,15,0.3)',fontFamily:'Cinzel,serif' }}>Tidak ada pemain aktif.</p>
+                  <p style={{fontSize:11,color:'rgba(241,196,15,0.3)',fontFamily:'Cinzel,serif'}}>Tidak ada pemain aktif.</p>
                 )}
               </div>
               <AnimatePresence>
                 {selectedIndex!=null&&(
                   <motion.div initial={{opacity:0,y:5,scale:0.9}} animate={{opacity:1,y:0,scale:1}} exit={{opacity:0}}
-                    style={{ borderRadius:9999,padding:'4px 14px',
-                      background:'rgba(241,196,15,0.1)',border:'1px solid rgba(241,196,15,0.3)',
-                      fontSize:10,color:'#F1C40F',fontFamily:'Cinzel,serif',letterSpacing:'0.08em' }}>
+                    style={{borderRadius:9999,padding:'4px 16px',
+                      background:'rgba(241,196,15,0.1)',border:'1px solid rgba(241,196,15,0.35)',
+                      fontSize:10,color:'#F1C40F',fontFamily:'Cinzel,serif',letterSpacing:'0.08em',
+                      boxShadow:'0 0 12px rgba(241,196,15,0.15)'}}>
                     Kartu #{selectedIndex+1} dipilih
                   </motion.div>
                 )}
@@ -689,40 +868,42 @@ export function MultiplayerGamePage() {
 
             {/* Divider */}
             <div style={{display:'flex',alignItems:'center',gap:10}}>
-              <div style={{flex:1,height:1,background:'linear-gradient(90deg,transparent,rgba(241,196,15,0.12))'}}/>
-              <div style={{width:4,height:4,borderRadius:'50%',background:'rgba(241,196,15,0.25)',transform:'rotate(45deg)'}}/>
-              <div style={{flex:1,height:1,background:'linear-gradient(90deg,rgba(241,196,15,0.12),transparent)'}}/>
+              <div style={{flex:1,height:1,background:'linear-gradient(90deg,transparent,rgba(241,196,15,0.14))'}}/>
+              <div style={{width:4,height:4,borderRadius:'50%',background:'rgba(241,196,15,0.3)',transform:'rotate(45deg)',boxShadow:'0 0 4px rgba(241,196,15,0.25)'}}/>
+              <div style={{flex:1,height:1,background:'linear-gradient(90deg,rgba(241,196,15,0.14),transparent)'}}/>
             </div>
 
             {/* My hand */}
-            <div style={{ display:'flex',flexDirection:'column',gap:10 }}>
-              <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:6 }}>
+            <div style={{display:'flex',flexDirection:'column',gap:10}}>
+              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:6}}>
                 <div style={{display:'flex',alignItems:'center',gap:8}}>
-                  <p style={{ fontFamily:'Cinzel,serif',fontSize:isMobile?11:13,color:'#F1C40F',margin:0,letterSpacing:'0.05em' }}>
+                  <p style={{fontFamily:'Cinzel,serif',fontSize:isMobile?11:13,color:'#F1C40F',margin:0,letterSpacing:'0.05em',
+                    textShadow:'0 0 10px rgba(241,196,15,0.3)'}}>
                     🃏 Kartu Kamu
                   </p>
-                  <div style={{borderRadius:9999,padding:'1px 8px',background:'rgba(241,196,15,0.1)',border:'1px solid rgba(241,196,15,0.2)'}}>
+                  <div style={{borderRadius:9999,padding:'1px 8px',background:'rgba(241,196,15,0.1)',border:'1px solid rgba(241,196,15,0.25)',
+                    boxShadow:'0 0 8px rgba(241,196,15,0.1)'}}>
                     <span style={{fontSize:9,color:'#F1C40F',fontFamily:'Cinzel,serif'}}>{myHand.length}</span>
                   </div>
                 </div>
-                <div style={{ display:'flex',gap:6 }}>
+                <div style={{display:'flex',gap:6}}>
                   <motion.button type="button" onClick={handleShuffle}
-                    whileHover={{scale:1.05}} whileTap={{scale:0.95}}
-                    style={{ borderRadius:9,padding:isMobile?'6px 12px':'7px 16px',fontSize:isMobile?10:12,fontWeight:700,
-                      border:'1px solid rgba(241,196,15,0.2)',background:'rgba(241,196,15,0.06)',
-                      color:'rgba(241,196,15,0.7)',cursor:'pointer',fontFamily:'Cinzel,serif',letterSpacing:'0.05em',transition:'all 0.2s' }}>
+                    whileHover={{scale:1.06,boxShadow:'0 0 16px rgba(241,196,15,0.2)'}} whileTap={{scale:0.95}}
+                    style={{borderRadius:9,padding:isMobile?'6px 12px':'7px 16px',fontSize:isMobile?10:12,fontWeight:700,
+                      border:'1px solid rgba(241,196,15,0.22)',background:'rgba(241,196,15,0.07)',
+                      color:'rgba(241,196,15,0.75)',cursor:'pointer',fontFamily:'Cinzel,serif',letterSpacing:'0.05em',transition:'all 0.2s'}}>
                     🔀 Kocok
                   </motion.button>
                   <motion.button type="button" onClick={handleDraw} disabled={!isMyTurn||selectedIndex==null}
-                    whileHover={isMyTurn&&selectedIndex!=null?{scale:1.05}:{}}
+                    whileHover={isMyTurn&&selectedIndex!=null?{scale:1.06,boxShadow:'0 0 28px rgba(192,57,43,0.7)'}:{}}
                     whileTap={isMyTurn&&selectedIndex!=null?{scale:0.95}:{}}
-                    style={{ borderRadius:9,padding:isMobile?'6px 12px':'7px 18px',fontSize:isMobile?10:12,fontWeight:700,border:'none',
+                    style={{borderRadius:9,padding:isMobile?'6px 12px':'7px 18px',fontSize:isMobile?10:12,fontWeight:700,border:'none',
                       cursor:isMyTurn&&selectedIndex!=null?'pointer':'not-allowed',
                       fontFamily:'Cinzel,serif',letterSpacing:'0.06em',
                       background:isMyTurn&&selectedIndex!=null?'linear-gradient(135deg,#7b1515,#a93226,#e74c3c)':'rgba(255,255,255,0.04)',
                       color:isMyTurn&&selectedIndex!=null?'#fff':'rgba(255,255,255,0.15)',
-                      boxShadow:isMyTurn&&selectedIndex!=null?'0 0 20px rgba(192,57,43,0.5),inset 0 1px 0 rgba(255,255,255,0.1)':'none',
-                      transition:'all 0.2s' }}>
+                      boxShadow:isMyTurn&&selectedIndex!=null?'0 0 24px rgba(192,57,43,0.6),inset 0 1px 0 rgba(255,255,255,0.1)':'none',
+                      transition:'all 0.2s'}}>
                     Ambil →
                   </motion.button>
                 </div>
@@ -731,8 +912,11 @@ export function MultiplayerGamePage() {
               <div style={{
                 display:'flex',flexWrap:'wrap',gap:isMobile?4:6,
                 padding:'12px 14px',borderRadius:14,
-                background:'rgba(0,0,0,0.3)',border:'1px solid rgba(241,196,15,0.06)',
+                background:'rgba(0,0,0,0.35)',
+                border:isMyTurn?'1px solid rgba(241,196,15,0.1)':'1px solid rgba(241,196,15,0.05)',
                 minHeight:86,
+                boxShadow:isMyTurn?'inset 0 0 24px rgba(241,196,15,0.03)':'none',
+                transition:'all 0.3s ease',
               }}>
                 <AnimatePresence>
                   {displayHand.map((card,i)=>(
@@ -747,7 +931,8 @@ export function MultiplayerGamePage() {
                   <motion.div initial={{opacity:0}} animate={{opacity:1}}
                     style={{display:'flex',alignItems:'center',gap:8,padding:'8px 0'}}>
                     <span style={{fontSize:18}}>🎉</span>
-                    <p style={{ fontSize:12,color:'rgba(39,174,96,0.6)',fontFamily:'Cinzel,serif',letterSpacing:'0.05em' }}>
+                    <p style={{fontSize:12,color:'rgba(39,174,96,0.7)',fontFamily:'Cinzel,serif',letterSpacing:'0.05em',
+                      textShadow:'0 0 10px rgba(39,174,96,0.4)'}}>
                       Kamu sudah bebas!
                     </p>
                   </motion.div>
@@ -758,8 +943,8 @@ export function MultiplayerGamePage() {
 
           {/* Chat desktop */}
           {!isMobile&&chatOpen&&(
-            <div style={{ borderRadius:16,overflow:'hidden',border:'1px solid rgba(241,196,15,0.1)',maxHeight:700,
-              borderLeft:'1px solid rgba(241,196,15,0.08)' }}>
+            <div style={{borderRadius:16,overflow:'hidden',border:'1px solid rgba(241,196,15,0.1)',maxHeight:700,
+              borderLeft:'1px solid rgba(241,196,15,0.08)'}}>
               <ChatPanel messages={messages} onSend={handleSendMessage} username={username} onClose={()=>setChatOpen(false)}/>
             </div>
           )}
@@ -771,99 +956,105 @@ export function MultiplayerGamePage() {
             const loser=localGameState.players[localGameState.loserIndex]
             const loserIsYou=loser?.id===user.id
             return (
-              <motion.div style={{ position:'fixed',inset:0,zIndex:40,display:'flex',alignItems:'center',justifyContent:'center',
-                padding:16,background:'rgba(0,0,0,0.92)',backdropFilter:'blur(18px)' }}
+              <motion.div style={{position:'fixed',inset:0,zIndex:40,display:'flex',alignItems:'center',justifyContent:'center',
+                padding:16,background:'rgba(0,0,0,0.92)',backdropFilter:'blur(20px)'}}
                 initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}>
 
                 {/* Floating particles */}
-                {[...Array(6)].map((_,i)=>(
+                {[...Array(8)].map((_,i)=>(
                   <motion.div key={i}
-                    style={{position:'absolute',left:`${15+i*14}%`,bottom:'15%',
+                    style={{position:'absolute',left:`${10+i*12}%`,bottom:'15%',
                       width:3,height:3,borderRadius:'50%',
-                      background:loserIsYou?'#e74c3c':'#F1C40F'}}
-                    animate={{y:[-0,-180],opacity:[1,0],scale:[1,0]}}
-                    transition={{duration:2+i*0.4,repeat:Infinity,delay:i*0.5}}/>
+                      background:loserIsYou?'#e74c3c':'#F1C40F',
+                      boxShadow:`0 0 6px ${loserIsYou?'rgba(192,57,43,0.8)':'rgba(241,196,15,0.8)'}`}}
+                    animate={{y:[-0,-200],opacity:[1,0],scale:[1,0]}}
+                    transition={{duration:2+i*0.3,repeat:Infinity,delay:i*0.4}}/>
                 ))}
 
                 <motion.div initial={{scale:0.7,y:40,opacity:0}} animate={{scale:1,y:0,opacity:1}}
                   transition={{type:'spring',stiffness:280,damping:22}}
-                  style={{ width:'100%',maxWidth:430,borderRadius:28,
-                    padding:isMobile?'24px 18px':'34px 30px',textAlign:'center',
+                  style={{width:'100%',maxWidth:440,borderRadius:28,
+                    padding:isMobile?'24px 18px':'36px 32px',textAlign:'center',
                     background:loserIsYou
                       ?'linear-gradient(160deg,rgba(18,3,3,0.99),rgba(32,6,6,0.99))'
                       :'linear-gradient(160deg,rgba(3,10,5,0.99),rgba(6,18,10,0.99))',
-                    border:loserIsYou?'1px solid rgba(200,50,43,0.55)':'1px solid rgba(241,196,15,0.5)',
+                    border:loserIsYou?'1px solid rgba(200,50,43,0.6)':'1px solid rgba(241,196,15,0.55)',
                     boxShadow:loserIsYou
-                      ?'0 0 90px rgba(192,57,43,0.3),inset 0 0 50px rgba(192,57,43,0.04)'
-                      :'0 0 90px rgba(241,196,15,0.2),inset 0 0 50px rgba(241,196,15,0.03)',
-                    position:'relative',overflow:'hidden' }}>
+                      ?'0 0 100px rgba(192,57,43,0.4),inset 0 0 50px rgba(192,57,43,0.05)'
+                      :'0 0 100px rgba(241,196,15,0.3),inset 0 0 50px rgba(241,196,15,0.04)',
+                    position:'relative',overflow:'hidden'}}>
 
                   {/* Top shimmer */}
                   <motion.div animate={{x:['-100%','200%']}} transition={{duration:3,repeat:Infinity,delay:0.5}}
                     style={{position:'absolute',top:0,left:0,right:0,height:2,
                       background:loserIsYou
-                        ?'linear-gradient(90deg,transparent,rgba(192,57,43,0.8),transparent)'
-                        :'linear-gradient(90deg,transparent,rgba(241,196,15,0.8),transparent)'}}/>
+                        ?'linear-gradient(90deg,transparent,rgba(192,57,43,0.9),transparent)'
+                        :'linear-gradient(90deg,transparent,rgba(241,196,15,0.9),transparent)'}}/>
+                  {/* Corner glows */}
+                  <div style={{position:'absolute',top:0,left:0,width:80,height:80,pointerEvents:'none',
+                    background:loserIsYou?'radial-gradient(circle at 0% 0%,rgba(192,57,43,0.14),transparent 70%)':'radial-gradient(circle at 0% 0%,rgba(241,196,15,0.09),transparent 70%)'}}/>
+                  <div style={{position:'absolute',bottom:0,right:0,width:80,height:80,pointerEvents:'none',
+                    background:loserIsYou?'radial-gradient(circle at 100% 100%,rgba(192,57,43,0.1),transparent 70%)':'radial-gradient(circle at 100% 100%,rgba(241,196,15,0.07),transparent 70%)'}}/>
 
                   <p style={{fontSize:8,textTransform:'uppercase',letterSpacing:'0.45em',
                     color:loserIsYou?'rgba(200,50,43,0.45)':'rgba(241,196,15,0.35)',
                     marginBottom:10,fontFamily:'Cinzel,serif'}}>Multiplayer — Game Over</p>
 
-                  <h2 style={{ fontFamily:'Cinzel Decorative,Georgia,serif',
+                  <h2 style={{fontFamily:'Cinzel Decorative,Georgia,serif',
                     fontSize:isMobile?22:28,color:loserIsYou?'#e74c3c':'#F1C40F',marginBottom:6,
                     textShadow:loserIsYou
-                      ?'0 0 24px rgba(192,57,43,0.8),0 0 50px rgba(192,57,43,0.3)'
-                      :'0 0 24px rgba(241,196,15,0.7),0 0 50px rgba(241,196,15,0.3)' }}>
+                      ?'0 0 28px rgba(192,57,43,0.9),0 0 60px rgba(192,57,43,0.4)'
+                      :'0 0 28px rgba(241,196,15,0.8),0 0 60px rgba(241,196,15,0.35)'}}>
                     {loserIsYou?'Kamu Kalah!':'Kamu Menang!'}
                   </h2>
                   <p style={{fontSize:24,marginBottom:8}}>{loserIsYou?'😈':'🎉'}</p>
 
-                  <p style={{ fontSize:12,color:'rgba(255,255,255,0.35)',marginBottom:20,fontFamily:'Cinzel,serif',letterSpacing:'0.04em' }}>
+                  <p style={{fontSize:12,color:'rgba(255,255,255,0.35)',marginBottom:20,fontFamily:'Cinzel,serif',letterSpacing:'0.04em'}}>
                     {loserIsYou?'Kamu pemegang Joker terakhir.':`${loser?.name} pemegang Joker terakhir.`}
                   </p>
 
                   {/* Joker card */}
                   <div style={{display:'flex',justifyContent:'center',marginBottom:20}}>
                     <motion.div animate={{rotate:[0,-6,6,0],y:[0,-10,0]}} transition={{duration:2.5,repeat:Infinity}}
-                      style={{ width:72,height:100,borderRadius:12,
+                      style={{width:72,height:100,borderRadius:12,
                         background:'linear-gradient(145deg,#0d0020,#2a0050)',
                         border:'2px solid #e74c3c',
-                        boxShadow:'0 0 50px rgba(192,57,43,0.8),0 0 100px rgba(192,57,43,0.25)',
-                        display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:5 }}>
-                      <span style={{fontSize:30,filter:'drop-shadow(0 0 10px rgba(255,80,80,0.8))'}}>🃏</span>
+                        boxShadow:'0 0 60px rgba(192,57,43,0.9),0 0 120px rgba(192,57,43,0.3)',
+                        display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:5}}>
+                      <span style={{fontSize:30,filter:'drop-shadow(0 0 12px rgba(255,80,80,0.9))'}}>🃏</span>
                       <span style={{fontSize:8,color:'#F1C40F',letterSpacing:'0.3em',fontFamily:'Cinzel,serif'}}>JOKER</span>
                     </motion.div>
                   </div>
 
                   {/* Players grid */}
-                  <div style={{ display:'flex',justifyContent:'center',gap:6,marginBottom:22,flexWrap:'wrap' }}>
+                  <div style={{display:'flex',justifyContent:'center',gap:6,marginBottom:22,flexWrap:'wrap'}}>
                     {localGameState.players.map(p=>(
                       <motion.div key={p.id} initial={{opacity:0,scale:0.8}} animate={{opacity:1,scale:1}}
-                        style={{ borderRadius:12,padding:isMobile?'7px 10px':'8px 13px',minWidth:60,
+                        style={{borderRadius:12,padding:isMobile?'7px 10px':'8px 13px',minWidth:60,
                           background:p.id===loser?.id?'rgba(192,57,43,0.15)':'rgba(241,196,15,0.06)',
-                          border:p.id===loser?.id?'1px solid rgba(192,57,43,0.4)':'1px solid rgba(241,196,15,0.1)' }}>
-                        <p style={{fontSize:10,color:p.id===loser?.id?'#e74c3c':'rgba(241,196,15,0.6)',fontWeight:700,
+                          border:p.id===loser?.id?'1px solid rgba(192,57,43,0.42)':'1px solid rgba(241,196,15,0.12)'}}>
+                        <p style={{fontSize:10,color:p.id===loser?.id?'#e74c3c':'rgba(241,196,15,0.65)',fontWeight:700,
                           fontFamily:'Cinzel,serif',margin:0,letterSpacing:'0.03em'}}>{p.name}</p>
                         <p style={{fontSize:9,color:'rgba(255,255,255,0.3)',marginTop:3}}>{p.id===loser?.id?'🃏 Kalah':'✓ Selamat'}</p>
                       </motion.div>
                     ))}
                   </div>
 
-                  <div style={{ display:'flex',gap:10,justifyContent:'center',flexWrap:'wrap' }}>
+                  <div style={{display:'flex',gap:10,justifyContent:'center',flexWrap:'wrap'}}>
                     <motion.button type="button" onClick={handleLeave}
-                      whileHover={{scale:1.05}} whileTap={{scale:0.95}}
-                      style={{ borderRadius:12,padding:isMobile?'10px 20px':'12px 26px',fontSize:13,fontWeight:700,border:'none',cursor:'pointer',
+                      whileHover={{scale:1.06,boxShadow:'0 0 36px rgba(192,57,43,0.7)'}} whileTap={{scale:0.95}}
+                      style={{borderRadius:12,padding:isMobile?'10px 20px':'12px 26px',fontSize:13,fontWeight:700,border:'none',cursor:'pointer',
                         fontFamily:'Cinzel,serif',letterSpacing:'0.08em',
                         background:'linear-gradient(135deg,#7b1515,#a93226,#e74c3c)',color:'#fff',
-                        boxShadow:'0 0 28px rgba(192,57,43,0.5),inset 0 1px 0 rgba(255,255,255,0.1)' }}>
+                        boxShadow:'0 0 32px rgba(192,57,43,0.55),inset 0 1px 0 rgba(255,255,255,0.1)'}}>
                       🔁 Main Lagi
                     </motion.button>
                     <motion.button type="button" onClick={handleHome}
-                      whileHover={{scale:1.05}} whileTap={{scale:0.95}}
-                      style={{ borderRadius:12,padding:isMobile?'10px 20px':'12px 26px',fontSize:13,fontWeight:700,cursor:'pointer',
+                      whileHover={{scale:1.06,boxShadow:'0 0 24px rgba(241,196,15,0.3)'}} whileTap={{scale:0.95}}
+                      style={{borderRadius:12,padding:isMobile?'10px 20px':'12px 26px',fontSize:13,fontWeight:700,cursor:'pointer',
                         fontFamily:'Cinzel,serif',letterSpacing:'0.08em',
-                        border:'1px solid rgba(241,196,15,0.3)',background:'rgba(241,196,15,0.07)',
-                        color:'rgba(241,196,15,0.8)' }}>
+                        border:'1px solid rgba(241,196,15,0.35)',background:'rgba(241,196,15,0.08)',
+                        color:'rgba(241,196,15,0.85)'}}>
                       🏠 Beranda
                     </motion.button>
                   </div>
