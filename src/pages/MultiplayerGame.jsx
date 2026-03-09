@@ -83,7 +83,179 @@ const mpStyles = `
   .mp-scrollbar::-webkit-scrollbar-thumb { background: rgba(241,196,15,0.2); border-radius: 2px; }
 `
 
-/* ── Card face ── */
+/* ── PREMIUM SVG ICONS (zero emoji) ── */
+// Lightning / Turn indicator
+const IcoBolt = ({ size=12 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+  </svg>
+)
+// Hourglass / Waiting
+const IcoHourglass = ({ size=12 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M5 3h14M5 21h14M8 8h8l-1 4H9L8 8z"/>
+  </svg>
+)
+// Shuffle / Kocok
+const IcoShuffle = ({ size=14 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="16 3 21 3 21 8"/>
+    <line x1="4" y1="20" x2="21" y2="3"/>
+    <polyline points="21 16 21 21 16 21"/>
+    <line x1="15" y1="15" x2="21" y2="21"/>
+  </svg>
+)
+// Replay / Main Lagi
+const IcoReplay = ({ size=14 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="1 4 1 10 7 10"/>
+    <path d="M3.51 15a9 9 0 102.13-9.36L1 10"/>
+  </svg>
+)
+// Home / Beranda
+const IcoHome = ({ size=14 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+    <polyline points="9 22 9 12 15 12 15 22"/>
+  </svg>
+)
+// Arrow down / Pick
+const IcoPickArrow = ({ size=12 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="12" y1="5" x2="12" y2="19"/>
+    <polyline points="19 12 12 19 5 12"/>
+  </svg>
+)
+// Card deck / Kartu Kamu label
+const IcoCards = ({ size=14 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="3" width="13" height="18" rx="2"/>
+    <path d="M5 7h7M5 10.5h7M5 14h4"/>
+    <rect x="9" y="7" width="13" height="18" rx="2" strokeOpacity="0.35"/>
+  </svg>
+)
+// Crown / Host
+const IcoCrown = ({ size=16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M2 17l4-10 4 6 2-8 2 8 4-6 4 10H2z"/>
+    <line x1="2" y1="20" x2="22" y2="20"/>
+  </svg>
+)
+// Person / Player
+const IcoPerson = ({ size=16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="7" r="4"/>
+    <path d="M4 21v-1a8 8 0 0116 0v1"/>
+  </svg>
+)
+// Check circle / Ready + Safe
+const IcoCheckCircle = ({ size=10, color='rgba(39,174,96,0.75)' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10"/>
+    <path d="M9 12l2 2 4-4"/>
+  </svg>
+)
+// Skull / Loser in game over
+const IcoSkull = ({ size=32, color='#e74c3c' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 2a7 7 0 017 7c0 3.5-2 5.5-2 7H7c0-1.5-2-3.5-2-7a7 7 0 017-7z"/>
+    <path d="M9 17v2a1 1 0 001 1h4a1 1 0 001-1v-2"/>
+    <circle cx="9" cy="12" r="1.2" fill={color} stroke="none"/>
+    <circle cx="15" cy="12" r="1.2" fill={color} stroke="none"/>
+  </svg>
+)
+// Star burst / Winner
+const IcoStar = ({ size=32, color='#F1C40F' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 2l2.4 4.9 5.4.8-3.9 3.8.9 5.4L12 14.4l-4.8 2.5.9-5.4L4.2 7.7l5.4-.8L12 2z"/>
+    <path d="M5 21h14"/>
+  </svg>
+)
+// X mark / Kalah indicator
+const IcoX = ({ size=9 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#e74c3c" strokeWidth="3" strokeLinecap="round">
+    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+  </svg>
+)
+// Check mark / Selamat indicator
+const IcoCheck = ({ size=9, color='rgba(39,174,96,0.75)' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="3" strokeLinecap="round">
+    <path d="M9 12l2 2 4-4"/>
+  </svg>
+)
+// Free / Safe shield
+const IcoShield = ({ size=20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="rgba(39,174,96,0.8)" strokeWidth="1.8" strokeLinecap="round">
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+    <path d="M9 12l2 2 4-4"/>
+  </svg>
+)
+// Rocket / Mulai game
+const IcoRocket = ({ size=14 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 2c0 0 4 3 4 9H8c0-6 4-9 4-9z"/>
+    <path d="M8 11v5l-2 3h12l-2-3v-5"/>
+    <circle cx="12" cy="17" r="1" fill="currentColor"/>
+  </svg>
+)
+// Door exit / Keluar
+const IcoDoor = ({ size=14 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
+  </svg>
+)
+// Chat bubble
+const IcoChat = ({ size=14 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+  </svg>
+)
+// Copy
+const IcoCopy = ({ size=12 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="9" y="9" width="13" height="13" rx="2"/>
+    <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+  </svg>
+)
+
+/* ── Multiplayer opponent "player" avatars — each seat gets unique elegant icon ── */
+const PlayerAvatars = [
+  ({ size=20, color='currentColor' }) => (
+    // The Phantom — theatrical mask
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 2C6.5 2 3 6 3 10v4c0 2 1 4 3 5l2 1h8l2-1c2-1 3-3 3-5v-4c0-4-3.5-8-9-8z"/>
+      <path d="M9 13c0 0 1 1.5 3 1.5s3-1.5 3-1.5"/>
+      <line x1="8" y1="10" x2="10" y2="10" strokeWidth="2"/>
+      <line x1="14" y1="10" x2="16" y2="10" strokeWidth="2"/>
+    </svg>
+  ),
+  ({ size=20, color='currentColor' }) => (
+    // The Scholar — minimalist spectacles + book
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="8" cy="10" r="3"/>
+      <circle cx="16" cy="10" r="3"/>
+      <line x1="11" y1="10" x2="13" y2="10"/>
+      <line x1="5" y1="10" x2="3" y2="8"/>
+      <line x1="19" y1="10" x2="21" y2="8"/>
+      <path d="M6 16c0 0 2 2 6 2s6-2 6-2"/>
+    </svg>
+  ),
+  ({ size=20, color='currentColor' }) => (
+    // The Knight — diamond/shield crest
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 2L4 6v6c0 5 4 9 8 10 4-1 8-5 8-10V6l-8-4z"/>
+      <path d="M12 8v8M8 12h8" strokeOpacity="0.6"/>
+    </svg>
+  ),
+  ({ size=20, color='currentColor' }) => (
+    // The Sage — eye of wisdom
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/>
+      <circle cx="12" cy="12" r="3"/>
+      <circle cx="12" cy="12" r="1" fill={color} stroke="none"/>
+    </svg>
+  ),
+]
 function CardFace({ card, size='md', glow=false }) {
   const isJoker=card.rank==='JOKER', isRed=RED_SUITS.includes(card.suit)
   const s={ sm:{w:36,h:52,r:10,st:10}, md:{w:52,h:74,r:14,st:14}, lg:{w:64,h:90,r:17,st:16} }[size]
@@ -265,8 +437,10 @@ function JokerAnimation() {
             fontSize:14,fontWeight:700,color:'#e74c3c',
             letterSpacing:'0.15em',fontFamily:'Cinzel,serif',
             boxShadow:'0 0 36px rgba(192,57,43,0.6)',
+            display:'flex',alignItems:'center',gap:10,
           }}>
-          😈 DAPAT JOKER!
+          <IcoSkull size={18} color="#e74c3c"/>
+          DAPAT JOKER!
         </motion.div>
       </motion.div>
     </motion.div>
@@ -299,7 +473,11 @@ function ChatPanel({ messages, onSend, username, onClose }) {
       <div className="mp-scrollbar" style={{flex:1,overflowY:'auto',padding:'10px 12px',display:'flex',flexDirection:'column',gap:8,minHeight:0}}>
         {messages.length===0&&(
           <div style={{textAlign:'center',marginTop:24,padding:'0 16px'}}>
-            <p style={{fontSize:20,marginBottom:8}}>💬</p>
+            <div style={{display:'flex',justifyContent:'center',marginBottom:8,opacity:0.3}}>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(241,196,15,0.6)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+              </svg>
+            </div>
             <p style={{fontSize:11,color:'rgba(255,255,255,0.2)',fontFamily:'Cinzel,serif',letterSpacing:'0.05em'}}>Belum ada pesan...</p>
           </div>
         )}
@@ -391,7 +569,10 @@ function WaitingRoom({ room, players, userId, isHost, onStart, onLeave, setReady
                   color:copied?'#27ae60':'rgba(241,196,15,0.8)',
                   border:`1px solid ${copied?'rgba(39,174,96,0.4)':'rgba(241,196,15,0.22)'}`,
                   transition:'all 0.2s'}}>
-                {copied?'✓ Tersalin':'Salin'}
+                {copied
+                  ? <span style={{display:'flex',alignItems:'center',gap:6}}><IcoCheckCircle size={11} color="#27ae60"/> Tersalin</span>
+                  : <span style={{display:'flex',alignItems:'center',gap:6}}><IcoCopy size={11}/> Salin</span>
+                }
               </motion.button>
             </div>
             <div style={{display:'flex',alignItems:'center',gap:8,marginTop:10}}>
@@ -413,15 +594,19 @@ function WaitingRoom({ room, players, userId, isHost, onStart, onLeave, setReady
                   background:'linear-gradient(135deg,rgba(5,2,15,0.92),rgba(12,5,30,0.88))',
                   border:`1px solid ${p.user_id===room.host_id?'rgba(241,196,15,0.28)':'rgba(255,255,255,0.06)'}`,
                   boxShadow:p.user_id===room.host_id?'0 4px 20px rgba(241,196,15,0.08)':'none'}}>
-                <div style={{width:34,height:34,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,
+                <div style={{width:34,height:34,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',
                   background:p.user_id===room.host_id?'linear-gradient(135deg,rgba(180,130,0,0.4),rgba(241,196,15,0.3))':'rgba(255,255,255,0.05)',
-                  border:p.user_id===room.host_id?'1px solid rgba(241,196,15,0.4)':'1px solid rgba(255,255,255,0.08)'}}>
-                  {p.user_id===room.host_id?'👑':'🧑'}
+                  border:p.user_id===room.host_id?'1px solid rgba(241,196,15,0.4)':'1px solid rgba(255,255,255,0.08)',
+                  color:p.user_id===room.host_id?'#F1C40F':'rgba(255,255,255,0.45)'}}>
+                  {p.user_id===room.host_id?<IcoCrown size={16}/>:<IcoPerson size={16}/>}
                 </div>
                 <p style={{flex:1,fontSize:13,fontWeight:600,color:'rgba(255,255,255,0.85)',margin:0,fontFamily:'Cinzel,serif',letterSpacing:'0.03em'}}>{p.username}</p>
                 {p.user_id===room.host_id
                   ?<span style={{fontSize:9,color:'rgba(241,196,15,0.55)',textTransform:'uppercase',letterSpacing:'0.15em',fontFamily:'Cinzel,serif'}}>Host</span>
-                  :<span style={{fontSize:11,fontWeight:700,color:p.is_ready?'#27ae60':'rgba(255,255,255,0.25)',fontFamily:'Cinzel,serif',letterSpacing:'0.05em'}}>{p.is_ready?'✓ Siap':'Menunggu'}</span>
+                  :<span style={{display:'flex',alignItems:'center',gap:5,fontSize:11,fontWeight:700,color:p.is_ready?'#27ae60':'rgba(255,255,255,0.25)',fontFamily:'Cinzel,serif',letterSpacing:'0.05em'}}>
+                    {p.is_ready&&<IcoCheckCircle size={10} color="#27ae60"/>}
+                    {p.is_ready?'Siap':'Menunggu'}
+                  </span>
                 }
               </motion.div>
             ))}
@@ -444,7 +629,10 @@ function WaitingRoom({ room, players, userId, isHost, onStart, onLeave, setReady
                   background:myPlayer?.is_ready?'linear-gradient(135deg,rgba(27,120,60,0.4),rgba(39,174,96,0.3))':'linear-gradient(135deg,#4a1080,#8e44ad)',
                   color:'#fff',
                   boxShadow:myPlayer?.is_ready?'0 0 20px rgba(39,174,96,0.35)':'0 0 24px rgba(142,68,173,0.45)'}}>
-                {myPlayer?.is_ready?'✓ Siap':'Tandai Siap'}
+                {myPlayer?.is_ready
+                  ? <span style={{display:'flex',alignItems:'center',justifyContent:'center',gap:7}}><IcoCheckCircle size={12} color="#27ae60"/> Siap</span>
+                  : 'Tandai Siap'
+                }
               </motion.button>
             )}
             {isHost&&(
@@ -456,20 +644,26 @@ function WaitingRoom({ room, players, userId, isHost, onStart, onLeave, setReady
                   background:players.length<2?'rgba(255,255,255,0.04)':'linear-gradient(135deg,#8b1515,#a93226,#e74c3c)',
                   color:players.length<2?'rgba(255,255,255,0.2)':'#fff',
                   boxShadow:players.length<2?'none':'0 0 28px rgba(192,57,43,0.55)'}}>
-                {players.length<2?'Tunggu Pemain...':'🚀 Mulai Game'}
+                {players.length<2
+                  ? 'Tunggu Pemain...'
+                  : <span style={{display:'flex',alignItems:'center',justifyContent:'center',gap:8}}><IcoRocket size={14}/> Mulai Game</span>
+                }
               </motion.button>
             )}
             <motion.button type="button" onClick={()=>setShowChat(true)} whileHover={{scale:1.03}} whileTap={{scale:0.97}}
               style={{borderRadius:12,padding:'12px 18px',fontSize:13,fontWeight:600,cursor:'pointer',
                 fontFamily:'Cinzel,serif',letterSpacing:'0.05em',
                 border:'1px solid rgba(241,196,15,0.25)',background:'rgba(241,196,15,0.07)',color:'rgba(241,196,15,0.75)'}}>
-              💬 {messages.length>0?`(${messages.length})`:'Chat'}
+              <span style={{display:'flex',alignItems:'center',gap:7}}>
+                <IcoChat size={13}/>
+                {messages.length>0?`Chat (${messages.length})`:'Chat'}
+              </span>
             </motion.button>
             <motion.button type="button" onClick={onLeave} whileHover={{scale:1.03}} whileTap={{scale:0.97}}
               style={{borderRadius:12,padding:'12px 18px',fontSize:13,fontWeight:600,cursor:'pointer',
                 border:'1px solid rgba(192,57,43,0.35)',background:'rgba(192,57,43,0.07)',color:'rgba(192,57,43,0.8)',
                 fontFamily:'Cinzel,serif',letterSpacing:'0.05em'}}>
-              Keluar
+              <span style={{display:'flex',alignItems:'center',gap:7}}><IcoDoor size={13}/> Keluar</span>
             </motion.button>
           </div>
         </div>
@@ -736,7 +930,10 @@ export function MultiplayerGamePage() {
                       color:isMyTurn?'#F1C40F':'rgba(255,255,255,0.35)',
                       boxShadow:isMyTurn?'0 0 18px rgba(241,196,15,0.25),inset 0 0 10px rgba(241,196,15,0.04)':'none',
                       animation:isMyTurn?'mp-pulse-border 1.5s ease-in-out infinite':'none'}}>
-                    {isMyTurn?'⚡ Giliranmu!':`⏳ ${currentPlayer?.name}...`}
+                    {isMyTurn
+                      ? <span style={{display:'flex',alignItems:'center',gap:6}}><IcoBolt size={11}/> Giliranmu!</span>
+                      : <span style={{display:'flex',alignItems:'center',gap:6}}><IcoHourglass size={11}/> {currentPlayer?.name}...</span>
+                    }
                   </motion.div>
                 </AnimatePresence>
                 <motion.button type="button" onClick={()=>setChatOpen(o=>!o)}
@@ -747,7 +944,10 @@ export function MultiplayerGamePage() {
                     border:chatOpen?'1px solid rgba(142,68,173,0.45)':'1px solid rgba(241,196,15,0.15)',
                     color:chatOpen?'rgba(200,150,255,0.85)':'rgba(241,196,15,0.55)',
                     transition:'all 0.2s'}}>
-                  {chatOpen?'✕ Chat':messages.length>0?`💬 (${messages.length})`:'💬 Chat'}
+                  {chatOpen
+                    ? <span style={{display:'flex',alignItems:'center',gap:6}}><IcoX size={11}/> Chat</span>
+                    : <span style={{display:'flex',alignItems:'center',gap:6}}><IcoChat size={12}/>{messages.length>0?` (${messages.length})`:' Chat'}</span>
+                  }
                 </motion.button>
               </div>
             </div>
@@ -780,15 +980,36 @@ export function MultiplayerGamePage() {
                       <div style={{position:'absolute',inset:0,borderRadius:16,pointerEvents:'none',
                         background:'radial-gradient(circle at 50% 0%,rgba(241,196,15,0.06),transparent 70%)'}}/>
                     )}
-                    <div style={{fontSize:isMobile?16:20,marginBottom:5,filter:p.out?'grayscale(1) opacity(0.35)':'none'}}>
-                      {p.out?'😌':'🧑'}
-                    </div>
+                    {(() => {
+                      const seatIdx = localGameState.players.filter(pl => pl.id !== user.id).findIndex(pl => pl.id === p.id)
+                      const AvatarComp = PlayerAvatars[seatIdx % PlayerAvatars.length]
+                      const avatarColor = p.out ? 'rgba(241,196,15,0.2)' : isCurrent ? '#F1C40F' : 'rgba(241,196,15,0.55)'
+                      return (
+                        <div style={{
+                          width:isMobile?32:38, height:isMobile?32:38, borderRadius:'50%',
+                          display:'flex',alignItems:'center',justifyContent:'center',
+                          marginBottom:4,
+                          background: p.out ? 'rgba(255,255,255,0.03)' : isCurrent ? 'linear-gradient(135deg,rgba(91,31,160,0.6),rgba(142,68,173,0.8))' : 'rgba(241,196,15,0.07)',
+                          border: isCurrent ? '2px solid rgba(241,196,15,0.7)' : '1px solid rgba(241,196,15,0.12)',
+                          boxShadow: isCurrent ? '0 0 16px rgba(241,196,15,0.35)' : 'none',
+                          opacity: p.out ? 0.35 : 1,
+                          color: avatarColor,
+                          filter: p.out ? 'grayscale(1)' : 'none',
+                          transition: 'all 0.3s ease',
+                        }}>
+                          <AvatarComp size={isMobile?14:17} color={avatarColor}/>
+                        </div>
+                      )
+                    })()}
                     <p style={{fontFamily:'Cinzel,serif',fontSize:isMobile?10:11,
                       color:p.out?'rgba(241,196,15,0.22)':isCurrent?'#F1C40F':'rgba(241,196,15,0.7)',
                       margin:0,letterSpacing:'0.03em',fontWeight:600,
                       textShadow:isCurrent?'0 0 10px rgba(241,196,15,0.5)':'none'}}>{p.name}</p>
                     {p.out?(
-                      <p style={{fontSize:9,color:'rgba(39,174,96,0.6)',marginTop:3,fontFamily:'Cinzel,serif'}}>✓ Selamat</p>
+                      <div style={{display:'flex',alignItems:'center',gap:4,marginTop:3}}>
+                        <IcoCheckCircle size={9} color="rgba(39,174,96,0.65)"/>
+                        <span style={{fontSize:9,color:'rgba(39,174,96,0.6)',fontFamily:'Cinzel,serif',letterSpacing:'0.1em'}}>Selamat</span>
+                      </div>
                     ):(
                       <>
                         <div style={{display:'flex',justifyContent:'center',marginTop:6,alignItems:'flex-end'}}>
@@ -836,8 +1057,9 @@ export function MultiplayerGamePage() {
               }}>
                 <p style={{fontFamily:'Cinzel,serif',fontSize:isMobile?10:11,
                   color:isMyTurn?'rgba(241,196,15,0.85)':'rgba(241,196,15,0.35)',
-                  letterSpacing:'0.06em',margin:0}}>
-                  {isMyTurn?'👇 Pilih 1 kartu dari lawan':'Kartu pemain di kiri'}
+                  letterSpacing:'0.06em',margin:0,display:'flex',alignItems:'center',gap:7}}>
+                  {isMyTurn && <IcoPickArrow size={11}/>}
+                  {isMyTurn?'Pilih 1 kartu dari lawan':'Kartu pemain di kiri'}
                 </p>
               </div>
               <div style={{display:'flex',justifyContent:'center',flexWrap:'wrap',padding:'6px 0'}}>
@@ -878,8 +1100,9 @@ export function MultiplayerGamePage() {
               <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:6}}>
                 <div style={{display:'flex',alignItems:'center',gap:8}}>
                   <p style={{fontFamily:'Cinzel,serif',fontSize:isMobile?11:13,color:'#F1C40F',margin:0,letterSpacing:'0.05em',
-                    textShadow:'0 0 10px rgba(241,196,15,0.3)'}}>
-                    🃏 Kartu Kamu
+                    textShadow:'0 0 10px rgba(241,196,15,0.3)',display:'flex',alignItems:'center',gap:7}}>
+                    <IcoCards size={14}/>
+                    Kartu Kamu
                   </p>
                   <div style={{borderRadius:9999,padding:'1px 8px',background:'rgba(241,196,15,0.1)',border:'1px solid rgba(241,196,15,0.25)',
                     boxShadow:'0 0 8px rgba(241,196,15,0.1)'}}>
@@ -892,7 +1115,7 @@ export function MultiplayerGamePage() {
                     style={{borderRadius:9,padding:isMobile?'6px 12px':'7px 16px',fontSize:isMobile?10:12,fontWeight:700,
                       border:'1px solid rgba(241,196,15,0.22)',background:'rgba(241,196,15,0.07)',
                       color:'rgba(241,196,15,0.75)',cursor:'pointer',fontFamily:'Cinzel,serif',letterSpacing:'0.05em',transition:'all 0.2s'}}>
-                    🔀 Kocok
+                    <span style={{display:'flex',alignItems:'center',gap:6}}><IcoShuffle size={13}/>Kocok</span>
                   </motion.button>
                   <motion.button type="button" onClick={handleDraw} disabled={!isMyTurn||selectedIndex==null}
                     whileHover={isMyTurn&&selectedIndex!=null?{scale:1.06,boxShadow:'0 0 28px rgba(192,57,43,0.7)'}:{}}
@@ -930,7 +1153,7 @@ export function MultiplayerGamePage() {
                 {myHand.length===0&&(
                   <motion.div initial={{opacity:0}} animate={{opacity:1}}
                     style={{display:'flex',alignItems:'center',gap:8,padding:'8px 0'}}>
-                    <span style={{fontSize:18}}>🎉</span>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(39,174,96,0.8)" strokeWidth="1.8" strokeLinecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
                     <p style={{fontSize:12,color:'rgba(39,174,96,0.7)',fontFamily:'Cinzel,serif',letterSpacing:'0.05em',
                       textShadow:'0 0 10px rgba(39,174,96,0.4)'}}>
                       Kamu sudah bebas!
@@ -1007,7 +1230,11 @@ export function MultiplayerGamePage() {
                       :'0 0 28px rgba(241,196,15,0.8),0 0 60px rgba(241,196,15,0.35)'}}>
                     {loserIsYou?'Kamu Kalah!':'Kamu Menang!'}
                   </h2>
-                  <p style={{fontSize:24,marginBottom:8}}>{loserIsYou?'😈':'🎉'}</p>
+                  <motion.div style={{display:'flex',justifyContent:'center',marginBottom:8}}
+                    animate={loserIsYou ? {filter:['drop-shadow(0 0 8px rgba(192,57,43,0.5))','drop-shadow(0 0 20px rgba(192,57,43,0.9))','drop-shadow(0 0 8px rgba(192,57,43,0.5))']} : {filter:['drop-shadow(0 0 8px rgba(241,196,15,0.4))','drop-shadow(0 0 20px rgba(241,196,15,0.9))','drop-shadow(0 0 8px rgba(241,196,15,0.4))']}}
+                    transition={{duration:2,repeat:Infinity}}>
+                    {loserIsYou ? <IcoSkull size={36} color="#e74c3c"/> : <IcoStar size={36} color="#F1C40F"/>}
+                  </motion.div>
 
                   <p style={{fontSize:12,color:'rgba(255,255,255,0.35)',marginBottom:20,fontFamily:'Cinzel,serif',letterSpacing:'0.04em'}}>
                     {loserIsYou?'Kamu pemegang Joker terakhir.':`${loser?.name} pemegang Joker terakhir.`}
@@ -1035,7 +1262,12 @@ export function MultiplayerGamePage() {
                           border:p.id===loser?.id?'1px solid rgba(192,57,43,0.42)':'1px solid rgba(241,196,15,0.12)'}}>
                         <p style={{fontSize:10,color:p.id===loser?.id?'#e74c3c':'rgba(241,196,15,0.65)',fontWeight:700,
                           fontFamily:'Cinzel,serif',margin:0,letterSpacing:'0.03em'}}>{p.name}</p>
-                        <p style={{fontSize:9,color:'rgba(255,255,255,0.3)',marginTop:3}}>{p.id===loser?.id?'🃏 Kalah':'✓ Selamat'}</p>
+                        <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:4,marginTop:3}}>
+                          {p.id===loser?.id
+                            ? <><IcoX size={9}/><span style={{fontSize:9,color:'rgba(255,255,255,0.3)'}}>Kalah</span></>
+                            : <><IcoCheck size={9} color="rgba(39,174,96,0.6)"/><span style={{fontSize:9,color:'rgba(255,255,255,0.3)'}}>Selamat</span></>
+                          }
+                        </div>
                       </motion.div>
                     ))}
                   </div>
@@ -1047,7 +1279,7 @@ export function MultiplayerGamePage() {
                         fontFamily:'Cinzel,serif',letterSpacing:'0.08em',
                         background:'linear-gradient(135deg,#7b1515,#a93226,#e74c3c)',color:'#fff',
                         boxShadow:'0 0 32px rgba(192,57,43,0.55),inset 0 1px 0 rgba(255,255,255,0.1)'}}>
-                      🔁 Main Lagi
+                      <span style={{display:'flex',alignItems:'center',gap:8}}><IcoReplay size={14}/> Main Lagi</span>
                     </motion.button>
                     <motion.button type="button" onClick={handleHome}
                       whileHover={{scale:1.06,boxShadow:'0 0 24px rgba(241,196,15,0.3)'}} whileTap={{scale:0.95}}
@@ -1055,7 +1287,7 @@ export function MultiplayerGamePage() {
                         fontFamily:'Cinzel,serif',letterSpacing:'0.08em',
                         border:'1px solid rgba(241,196,15,0.35)',background:'rgba(241,196,15,0.08)',
                         color:'rgba(241,196,15,0.85)'}}>
-                      🏠 Beranda
+                      <span style={{display:'flex',alignItems:'center',gap:8}}><IcoHome size={14}/> Beranda</span>
                     </motion.button>
                   </div>
                 </motion.div>

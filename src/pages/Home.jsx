@@ -560,14 +560,24 @@ export function HomePage() {
                   style={{ background: 'linear-gradient(105deg,transparent 30%,rgba(255,255,255,0.22) 50%,transparent 70%)' }}
                   animate={btnShimmer ? { x: ['-100%', '100%'] } : { x: '-100%' }}
                   transition={{ duration: 0.6, ease: 'easeInOut' }} />
-                <span className="relative z-10">🎰 Main Sekarang</span>
+              <span className="relative z-10 flex items-center gap-2.5">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="5 3 19 12 5 21 5 3"/>
+                </svg>
+                Main Sekarang
+              </span>
               </motion.button>
               <motion.button type="button" onClick={() => navigate('/history')}
                 whileHover={{ scale: 1.07, boxShadow: '0 0 32px rgba(241,196,15,0.35)', borderColor: 'rgba(241,196,15,0.7)' }}
                 whileTap={{ scale: 0.96 }}
                 className="relative overflow-hidden rounded-full px-8 py-3.5 text-sm font-bold uppercase tracking-[0.2em]"
                 style={{ border: '1px solid rgba(241,196,15,0.4)', color: '#F1C40F', background: 'rgba(0,0,0,0.35)', cursor: 'pointer' }}>
-                📖 Lihat History
+                <span className="flex items-center gap-2.5">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/>
+                  </svg>
+                  Lihat History
+                </span>
               </motion.button>
             </motion.div>
             <motion.div className="flex flex-wrap justify-center gap-8 md:justify-start"
@@ -620,9 +630,33 @@ export function HomePage() {
           </motion.div>
           <div className="grid gap-4 sm:grid-cols-3">
             {[
-              { icon: '🃏', title: 'Hindari Joker', desc: 'Buang semua kartumu sebelum yang lain. Jangan sampai menjadi pemegang Joker terakhir.', color: 'rgba(192,57,43,0.35)', glow: 'rgba(192,57,43,0.6)' },
-              { icon: '🎰', title: 'Strategi & Insting', desc: 'Baca pola lawan, pilih kartu dengan tepat. Timing yang benar bisa membalikkan permainan.', color: 'rgba(241,196,15,0.18)', glow: 'rgba(241,196,15,0.5)' },
-              { icon: '⚡', title: 'Real-time Cepat', desc: 'Multiplayer online dengan Supabase Realtime. Setiap ronde menegangkan sampai kartu terakhir.', color: 'rgba(142,68,173,0.35)', glow: 'rgba(142,68,173,0.6)' },
+              {
+                icon: (
+                  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="3" width="13" height="18" rx="2"/>
+                    <path d="M5 7h7M5 10.5h7M5 14h4"/>
+                    <path d="M17 7l3 3-3 3M20 10H13" strokeWidth="1.6"/>
+                  </svg>
+                ),
+                title: 'Hindari Joker', desc: 'Buang semua kartumu sebelum yang lain. Jangan sampai menjadi pemegang Joker terakhir.', color: 'rgba(192,57,43,0.35)', glow: 'rgba(192,57,43,0.6)',
+              },
+              {
+                icon: (
+                  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/>
+                  </svg>
+                ),
+                title: 'Strategi & Insting', desc: 'Baca pola lawan, pilih kartu dengan tepat. Timing yang benar bisa membalikkan permainan.', color: 'rgba(241,196,15,0.18)', glow: 'rgba(241,196,15,0.5)',
+              },
+              {
+                icon: (
+                  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                  </svg>
+                ),
+                title: 'Real-time Cepat', desc: 'Multiplayer online dengan Supabase Realtime. Setiap ronde menegangkan sampai kartu terakhir.', color: 'rgba(142,68,173,0.35)', glow: 'rgba(142,68,173,0.6)',
+              },
             ].map((f, i) => (
               <motion.div key={f.title}
                 initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }}
@@ -637,11 +671,11 @@ export function HomePage() {
                 <div className="absolute bottom-0 right-0 h-24 w-24 opacity-20"
                   style={{ background: `radial-gradient(circle at 100% 100%,${f.color},transparent 70%)` }} />
                 <div className="relative">
-                  <motion.span className="text-4xl block"
-                    whileHover={{ scale: 1.2, filter: `drop-shadow(0 0 12px ${f.glow})` }}
-                    style={{ filter: `drop-shadow(0 0 4px ${f.glow})` }}>
-                    {f.icon}
-                  </motion.span>
+                <motion.div className="block"
+                  style={{ color: f.glow, filter: `drop-shadow(0 0 6px ${f.glow})` }}
+                  whileHover={{ scale: 1.18, filter: `drop-shadow(0 0 16px ${f.glow})` }}>
+                  {f.icon}
+                </motion.div>
                   <p className="mt-3 font-perpetua text-xl" style={{ color: '#f5d87a', textShadow: '0 0 12px rgba(241,196,15,0.4)' }}>{f.title}</p>
                   <p className="mt-2 text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.5)' }}>{f.desc}</p>
                 </div>
