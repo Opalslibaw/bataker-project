@@ -11,15 +11,15 @@ const NAV = [
   { label: 'Lobby', to: '/lobby' },
 ]
 
+/* Kartu tersebar secara natural di area kanan — tidak tumpuk */
 const CARDS = [
-  { id: 1, label: 'A♠', rot: -22, ox: -180, oy: 10,  isJoker: false },
-  { id: 2, label: 'K♥', rot: -9,  ox: -90,  oy: -10, isJoker: false },
-  { id: 3, label: '🃏', rot:  2,  ox:  0,   oy: 0,   isJoker: true  },
-  { id: 4, label: 'Q♦', rot: 13,  ox:  90,  oy: -8,  isJoker: false },
-  { id: 5, label: '10♣',rot: 24,  ox:  180, oy: 12,  isJoker: false },
+  { id: 1, label: 'A♠', rot: -28, ox: -170, oy: -55, isJoker: false },
+  { id: 2, label: 'K♥', rot: -12, ox: -82,  oy: -70, isJoker: false },
+  { id: 3, label: '🃏', rot:   3, ox:  10,  oy: -60, isJoker: true  },
+  { id: 4, label: 'Q♦', rot:  17, ox:  98,  oy: -52, isJoker: false },
+  { id: 5, label: '10♣',rot:  30, ox:  175, oy: -42, isJoker: false },
 ]
 
-/* ── CSS keyframes: semua animasi looping pakai CSS native, bukan framer repeat:Infinity */
 const homeStyles = `
   @keyframes hm-float {
     0%, 100% { transform: translateY(0px); }
@@ -50,7 +50,6 @@ const homeStyles = `
   }
 `
 
-/* ── Spotlight – throttle via RAF agar tidak spam set tiap mousemove */
 function Spotlight() {
   const x  = useMotionValue(-600)
   const y  = useMotionValue(-600)
@@ -78,7 +77,6 @@ function Spotlight() {
   )
 }
 
-/* ── Static BG – ganti Canvas (sangat berat) dengan CSS gradients */
 function StaticBg() {
   return (
     <div className="pointer-events-none fixed inset-0 z-0" style={{
@@ -92,7 +90,6 @@ function StaticBg() {
   )
 }
 
-/* ── Loading screen – CSS spin, bukan framer repeat:Infinity */
 function LoadingScreen() {
   return (
     <motion.div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-8"
@@ -144,8 +141,12 @@ function LoadingScreen() {
   )
 }
 
-/* ── DraggableCard – float via CSS, bukan framer repeat:Infinity */
-function DraggableCard({ card }) {
+/* ── DraggableCard ──
+   Di mobile: pointer-events-none, jadi pure dekorasi background.
+   Di desktop: bisa diseret & dilempar.
+   z-index selalu di bawah konten utama (max z-5 saat idle, z-20 saat drag).
+*/
+function DraggableCard({ card, isMobile }) {
   const isJoker = card.isJoker
   const dragX   = useMotionValue(0)
   const dragY   = useMotionValue(0)
@@ -159,6 +160,7 @@ function DraggableCard({ card }) {
   const retTimer  = useRef(null)
 
   const handlePointerDown = useCallback((e) => {
+    if (isMobile) return
     e.preventDefault(); e.stopPropagation()
     if (retTimer.current) clearTimeout(retTimer.current)
     setIsDragging(true)
@@ -188,42 +190,55 @@ function DraggableCard({ card }) {
     }
     window.addEventListener('mousemove', onMove, { passive: false }); window.addEventListener('mouseup', onUp)
     window.addEventListener('touchmove', onMove, { passive: false }); window.addEventListener('touchend', onUp)
-  }, [dragX, dragY])
+  }, [dragX, dragY, isMobile])
+
+  /* z-index: saat drag naik ke 20, saat idle SELALU di bawah konten (z 1-5) */
+  const zIdx = isDragging ? 20 : card.id
 
   return (
     <motion.div
       onPointerDown={handlePointerDown}
-      className="absolute left-1/2 top-1/2 flex flex-col items-center justify-between rounded-2xl p-3 select-none"
+      className="absolute flex flex-col items-center justify-between rounded-2xl p-3 select-none"
       style={{
-        width: 88, height: 124,
-        cursor: isDragging ? 'grabbing' : 'grab',
-        x: springX, y: springY,
-        rotate: card.rot,
+        width: 78, height: 110,
+        /* posisi tersebar dari tengah container */
+        left: '50%',
+        top: '50%',
         translateX: `calc(-50% + ${card.ox}px)`,
         translateY: `calc(-50% + ${card.oy}px)`,
-        /* CSS float — jauh lebih ringan dari framer animate repeat */
+        x: springX,
+        y: springY,
+        rotate: card.rot,
+        cursor: isMobile ? 'default' : (isDragging ? 'grabbing' : 'grab'),
+        pointerEvents: isMobile ? 'none' : 'auto',
         animation: !isDragging ? `hm-float ${3 + card.id * 0.4}s ease-in-out ${card.id * 0.18}s infinite` : 'none',
-        background: isJoker ? 'linear-gradient(135deg,#1a0030,#4a0080)' : 'linear-gradient(135deg,#0a0705,#1f140a)',
-        border: isJoker ? '1px solid rgba(192,57,43,0.85)' : '1px solid rgba(241,196,15,0.55)',
+        background: isJoker
+          ? 'linear-gradient(135deg,#1a0030,#4a0080)'
+          : 'linear-gradient(135deg,#0a0705,#1f140a)',
+        border: isJoker
+          ? '1px solid rgba(192,57,43,0.85)'
+          : '1px solid rgba(241,196,15,0.45)',
         boxShadow: isDragging
           ? (isJoker ? '0 0 90px rgba(192,57,43,1),0 24px 48px rgba(0,0,0,0.9)' : '0 0 70px rgba(241,196,15,0.9),0 24px 48px rgba(0,0,0,0.9)')
-          : (isJoker ? '0 0 36px rgba(192,57,43,0.65),0 8px 24px rgba(0,0,0,0.7)' : '0 0 20px rgba(241,196,15,0.28),0 8px 20px rgba(0,0,0,0.6)'),
-        zIndex: isDragging ? 50 : isJoker ? 10 : card.id,
+          : (isJoker ? '0 0 28px rgba(192,57,43,0.5),0 6px 18px rgba(0,0,0,0.6)' : '0 0 14px rgba(241,196,15,0.2),0 6px 16px rgba(0,0,0,0.55)'),
+        zIndex: zIdx,
         touchAction: 'none',
         willChange: 'transform',
+        /* opacity sedikit lebih rendah di mobile agar terlihat sebagai latar */
+        opacity: isMobile ? 0.45 : 1,
       }}
-      whileHover={!isDragging ? { scale: 1.1 } : {}}
+      whileHover={(!isMobile && !isDragging) ? { scale: 1.1 } : {}}
     >
       <div className="absolute inset-x-0 top-0 h-px rounded-t-2xl pointer-events-none"
         style={{ background: isJoker
           ? 'linear-gradient(90deg,transparent,rgba(192,57,43,0.5),transparent)'
           : 'linear-gradient(90deg,transparent,rgba(241,196,15,0.35),transparent)' }} />
-      <span className="self-start text-sm font-bold" style={{ color: isJoker ? '#e74c3c' : '#F1C40F' }}>{card.label}</span>
-      <span className="font-perpetua text-3xl"
+      <span className="self-start text-xs font-bold" style={{ color: isJoker ? '#e74c3c' : '#F1C40F' }}>{card.label}</span>
+      <span className="font-perpetua text-2xl"
         style={{ color: isJoker ? '#e74c3c' : '#F1C40F', filter: isJoker ? 'drop-shadow(0 0 6px #e74c3c)' : 'drop-shadow(0 0 5px #F1C40F)' }}>
         {card.label}
       </span>
-      <span className="self-end rotate-180 text-sm font-bold" style={{ color: isJoker ? '#e74c3c' : '#F1C40F' }}>{card.label}</span>
+      <span className="self-end rotate-180 text-xs font-bold" style={{ color: isJoker ? '#e74c3c' : '#F1C40F' }}>{card.label}</span>
     </motion.div>
   )
 }
@@ -237,17 +252,27 @@ export function HomePage() {
   const [copied, setCopied]         = useState(false)
   const [mobileMenu, setMobileMenu] = useState(false)
   const [showHint, setShowHint]     = useState(false)
+  const [isMobile, setIsMobile]     = useState(false)
 
   const username = profile?.username || (user?.email ? user.email.split('@')[0] : null)
 
   useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768)
+    check()
+    window.addEventListener('resize', check, { passive: true })
+    return () => window.removeEventListener('resize', check)
+  }, [])
+
+  useEffect(() => {
     const t = setTimeout(() => {
       setIsLoading(false)
-      setTimeout(() => setShowHint(true),  400)
-      setTimeout(() => setShowHint(false), 3600)
+      if (!isMobile) {
+        setTimeout(() => setShowHint(true),  400)
+        setTimeout(() => setShowHint(false), 3600)
+      }
     }, 1800)
     return () => clearTimeout(t)
-  }, [])
+  }, [isMobile])
 
   const handleLogout = async () => { await signOut(); navigate('/login', { replace: true }) }
   const handleCopy   = async () => {
@@ -393,8 +418,9 @@ export function HomePage() {
       {/* MAIN */}
       <main className="relative z-20 flex min-h-screen w-full flex-col pt-[64px]">
         <section className="flex flex-1 flex-col items-center justify-center px-6 py-16 md:flex-row md:gap-0 md:px-14 lg:px-24">
-          {/* Left */}
-          <motion.div className="flex-1 space-y-8 text-center md:text-left"
+
+          {/* Left – konten teks */}
+          <motion.div className="relative z-10 flex-1 space-y-8 text-center md:text-left"
             initial={{ opacity: 0, x: -40 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, delay: 0.2 }}>
             <div className="space-y-3">
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
@@ -425,7 +451,7 @@ export function HomePage() {
               <motion.button type="button" onClick={() => navigate(user ? '/lobby' : '/login')}
                 whileHover={{ scale: 1.06, boxShadow: '0 0 40px rgba(192,57,43,0.8)' }} whileTap={{ scale: 0.96 }}
                 className="relative overflow-hidden rounded-full px-8 py-3.5 text-sm font-bold uppercase tracking-[0.2em] text-white"
-                style={{ background: 'linear-gradient(135deg,#a93226,#e74c3c)', boxShadow: '0 0 26px rgba(192,57,43,0.6)' }}>
+                style={{ background: 'linear-gradient(135deg,#a93226,#e74c3c)', boxShadow: '0 0 26px rgba(192,57,43,0.6)', position: 'relative', zIndex: 10 }}>
                 <span className="pointer-events-none absolute inset-0 hm-btn-shimmer"
                   style={{ background: 'linear-gradient(105deg,transparent 30%,rgba(255,255,255,0.18) 50%,transparent 70%)' }} />
                 <span className="relative z-10 flex items-center gap-2.5">
@@ -438,7 +464,7 @@ export function HomePage() {
               <motion.button type="button" onClick={() => navigate('/history')}
                 whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.96 }}
                 className="relative overflow-hidden rounded-full px-8 py-3.5 text-sm font-bold uppercase tracking-[0.2em]"
-                style={{ border: '1px solid rgba(241,196,15,0.4)', color: '#F1C40F', background: 'rgba(0,0,0,0.35)', cursor: 'pointer' }}>
+                style={{ border: '1px solid rgba(241,196,15,0.4)', color: '#F1C40F', background: 'rgba(0,0,0,0.35)', cursor: 'pointer', position: 'relative', zIndex: 10 }}>
                 <span className="flex items-center gap-2.5">
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/>
@@ -459,15 +485,30 @@ export function HomePage() {
             </motion.div>
           </motion.div>
 
-          {/* Right – cards */}
-          <motion.div className="relative mt-14 h-72 w-full flex-1 md:mt-0 md:h-[420px]"
+          {/* Right – area kartu:
+              - Desktop: relative, interaktif, pointer-events aktif
+              - Mobile: absolute di belakang konten (z-0), dekoratif saja
+          */}
+          <motion.div
+            className="md:relative md:flex-1 md:h-[420px] md:mt-0"
+            style={{
+              /* Mobile: absolute, penuh, z-0 di belakang teks */
+              position: isMobile ? 'absolute' : undefined,
+              inset: isMobile ? 0 : undefined,
+              zIndex: isMobile ? 0 : undefined,
+              height: isMobile ? '100%' : undefined,
+              width: isMobile ? '100%' : undefined,
+              pointerEvents: isMobile ? 'none' : undefined,
+              /* Desktop: beri tinggi fixed agar kartu terlihat */
+              marginTop: isMobile ? 0 : undefined,
+            }}
             initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, delay: 0.3 }}>
-            {CARDS.map((card) => <DraggableCard key={card.id} card={card} />)}
+            {CARDS.map((card) => <DraggableCard key={card.id} card={card} isMobile={isMobile} />)}
             <AnimatePresence>
-              {showHint && (
+              {showHint && !isMobile && (
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
                   className="absolute bottom-2 left-1/2 -translate-x-1/2 pointer-events-none whitespace-nowrap rounded-full px-4 py-2 text-[10px]"
-                  style={{ background: 'rgba(0,0,0,0.8)', border: '1px solid rgba(241,196,15,0.3)', color: 'rgba(241,196,15,0.8)' }}>
+                  style={{ background: 'rgba(0,0,0,0.8)', border: '1px solid rgba(241,196,15,0.3)', color: 'rgba(241,196,15,0.8)', zIndex: 15 }}>
                   ✦ Seret kartu — lempar kencang untuk efek!
                 </motion.div>
               )}
@@ -475,8 +516,8 @@ export function HomePage() {
           </motion.div>
         </section>
 
-        {/* FEATURES */}
-        <section className="w-full px-6 pb-20 md:px-14 lg:px-24">
+        {/* FEATURES – z-10 agar selalu di atas kartu */}
+        <section className="relative z-10 w-full px-6 pb-20 md:px-14 lg:px-24">
           <motion.div initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }} transition={{ duration: 0.5 }}
             className="mb-8 flex items-center gap-4">
@@ -495,8 +536,7 @@ export function HomePage() {
                 viewport={{ once: true }} transition={{ delay: i * 0.1 }}
                 whileHover={{ y: -6, scale: 1.03 }}
                 className="relative overflow-hidden rounded-2xl p-6"
-                /* backdrop-filter dihapus – penyebab utama lag mobile */
-                style={{ border: '1px solid rgba(241,196,15,0.12)', background: 'rgba(8,5,2,0.88)' }}>
+                style={{ border: '1px solid rgba(241,196,15,0.12)', background: 'rgba(8,5,2,0.92)' }}>
                 <div className="absolute inset-x-0 top-0 h-px"
                   style={{ background: 'linear-gradient(90deg,transparent,rgba(241,196,15,0.35),transparent)' }} />
                 <div className="absolute inset-0 rounded-2xl" style={{ background: `radial-gradient(circle at 20% 20%,${f.color},transparent 60%)`, pointerEvents: 'none' }} />
