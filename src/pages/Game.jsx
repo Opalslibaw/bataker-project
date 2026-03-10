@@ -245,8 +245,7 @@ function CardFace({ card, size = 'md', glow = false, selected = false, onClick, 
           background: 'linear-gradient(105deg,transparent 30%,rgba(241,196,15,0.18) 50%,transparent 70%)',
           backgroundSize: '200% 100%',
         }}
-          animate={{ backgroundPosition: ['-200% 0', '200% 0'] }}
-          transition={{ duration: 1.4, repeat: Infinity, ease: 'linear' }} />
+/>
       )}
 
       {isJoker ? (
@@ -328,8 +327,7 @@ function CardBack({ size = 'md', highlighted = false, selected = false, onClick,
           background: 'linear-gradient(105deg,transparent 30%,rgba(255,255,255,0.06) 50%,transparent 70%)',
           backgroundSize: '200% 100%',
         }}
-          animate={{ backgroundPosition: ['-200% 0', '200% 0'] }}
-          transition={{ duration: 2, repeat: Infinity, ease: 'linear' }} />
+/>
       )}
       {selected && <div style={{ position: 'absolute', inset: 0, background: 'rgba(241,196,15,0.14)', borderRadius: 9 }} />}
       {highlighted && !selected && (
@@ -398,17 +396,16 @@ function BotPlayer({ player, isCurrent }) {
         borderRadius: 18, padding: '14px 18px', minWidth: 130,
         background: 'linear-gradient(145deg, rgba(5,2,15,0.97), rgba(15,5,35,0.92))',
         border: '1px solid rgba(241,196,15,0.12)',
-        backdropFilter: 'blur(20px)',
+        
         display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10,
         position: 'relative', overflow: 'hidden',
       }}>
       {/* Top shimmer — animated when active */}
-      <motion.div
-        animate={isCurrent ? { x: ['-100%', '200%'] } : { x: '-100%' }}
-        transition={isCurrent ? { duration: 1.6, repeat: Infinity, ease: 'linear' } : {}}
-        style={{
+      <div style={{
           position: 'absolute', top: 0, left: 0, right: 0, height: 1,
           background: 'linear-gradient(90deg, transparent, rgba(241,196,15,0.9), transparent)',
+          backgroundSize: '200% 100%',
+          animation: isCurrent ? 'gm-shimmer 1.6s linear infinite' : 'none',
         }} />
       {/* Corner ambient */}
       {isCurrent && (
@@ -455,14 +452,11 @@ function BotPlayer({ player, isCurrent }) {
         )}
         {isCurrent && !player.out && (
           <motion.div
-            animate={{ opacity: [1, 0.3, 1] }}
-            transition={{ duration: 0.8, repeat: Infinity }}
+            
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3, marginTop: 4 }}>
             {[0, 1, 2].map(i => (
-              <motion.div key={i}
-                animate={{ y: [0, -4, 0] }}
-                transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.15 }}
-                style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(241,196,15,0.8)', boxShadow: '0 0 4px rgba(241,196,15,0.6)' }} />
+              <div key={i}
+                style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(241,196,15,0.8)', boxShadow: '0 0 4px rgba(241,196,15,0.6)', animation: `gm-float 0.6s ease-in-out ${i * 0.15}s infinite` }} />
             ))}
           </motion.div>
         )}
@@ -497,6 +491,25 @@ function BotPlayer({ player, isCurrent }) {
     </motion.div>
   )
 }
+
+const gameStyles = `
+  @keyframes gm-shimmer {
+    0%   { background-position: -200% center; }
+    100% { background-position:  200% center; }
+  }
+  @keyframes gm-float {
+    0%, 100% { transform: translateY(0px); }
+    50%       { transform: translateY(-4px); }
+  }
+  @keyframes gm-pulse {
+    0%, 100% { opacity: 0.5; }
+    50%       { opacity: 1; }
+  }
+  @keyframes gm-float {
+    0%, 100% { transform: translateY(0px); }
+    50%       { transform: translateY(-6px); }
+  }
+`
 
 export function GamePage() {
   const [state, dispatch] = useReducer(gameReducer, initialState)
@@ -665,8 +678,7 @@ export function GamePage() {
           ))}
           {/* Animated shimmer border line */}
           <motion.div
-            animate={{ x: ['-100%', '200%'] }}
-            transition={{ duration: 5, repeat: Infinity, ease: 'linear' }}
+
             style={{
               position: 'absolute', top: 10, left: 10, right: 10, height: 1,
               background: 'linear-gradient(90deg,transparent,rgba(241,196,15,0.5),transparent)',
@@ -1087,7 +1099,7 @@ export function GamePage() {
               style={{
                 position: 'fixed', inset: 0, zIndex: 40,
                 display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
-                background: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(20px)',
+                background: 'rgba(0,0,0,0.92)', 
               }}
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               {/* Background particles */}
@@ -1125,8 +1137,7 @@ export function GamePage() {
                     }}>
                     {/* Animated top shimmer */}
                     <motion.div
-                      animate={{ x: ['-100%', '200%'] }}
-                      transition={{ duration: 3, repeat: Infinity, delay: 1 }}
+
                       style={{
                         position: 'absolute', top: 0, left: 0, right: 0, height: 2,
                         background: loserIsYou

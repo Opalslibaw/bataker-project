@@ -81,6 +81,10 @@ const mpStyles = `
   .mp-scrollbar::-webkit-scrollbar { width: 4px; }
   .mp-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
   .mp-scrollbar::-webkit-scrollbar-thumb { background: rgba(241,196,15,0.2); border-radius: 2px; }
+  @keyframes mp-btn-shimmer {
+    0%   { background-position: -200% center; }
+    100% { background-position:  200% center; }
+  }
 `
 
 /* ── PREMIUM SVG ICONS (zero emoji) ── */
@@ -1180,7 +1184,7 @@ export function MultiplayerGamePage() {
             const loserIsYou=loser?.id===user.id
             return (
               <motion.div style={{position:'fixed',inset:0,zIndex:40,display:'flex',alignItems:'center',justifyContent:'center',
-                padding:16,background:'rgba(0,0,0,0.92)',backdropFilter:'blur(20px)'}}
+                padding:16,background:'rgba(0,0,0,0.96)'}}
                 initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}>
 
                 {/* Floating particles */}

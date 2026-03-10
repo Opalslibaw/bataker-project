@@ -1,3 +1,14 @@
+const loginStyles = `
+  @keyframes lg-float {
+    0%, 100% { transform: translateY(0px); }
+    50%       { transform: translateY(-12px); }
+  }
+  @keyframes lg-shimmer {
+    0%   { background-position: -200% center; }
+    100% { background-position:  200% center; }
+  }
+`
+
 import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence, useMotionValue, useSpring } from 'framer-motion'
@@ -51,56 +62,45 @@ const IconAlert = () => (
 // ── Floating particle cards (decorative)
 function FloatingCard({ label, style }) {
   return (
-    <motion.div
+    <div
       className="pointer-events-none absolute flex flex-col items-center justify-between rounded-xl p-1.5"
       style={{
         width: 40, height: 56,
         background: 'linear-gradient(135deg,#0a0705,#1f140a)',
         border: '1px solid rgba(241,196,15,0.3)',
-        boxShadow: '0 0 18px rgba(241,196,15,0.12), 0 4px 16px rgba(0,0,0,0.5)',
+        boxShadow: '0 0 14px rgba(241,196,15,0.1), 0 4px 12px rgba(0,0,0,0.5)',
+        opacity: 0.7,
+        animation: `lg-float ${4 + (style.delay ?? 0) % 2}s ease-in-out ${style.delay ?? 0}s infinite`,
         ...style,
       }}
-      animate={{
-        y: [0, -14, 0],
-        rotate: [style.rotate ?? 0, (style.rotate ?? 0) + 4, style.rotate ?? 0],
-        opacity: [0.5, 0.9, 0.5],
-      }}
-      transition={{ duration: 5 + Math.random() * 2, repeat: Infinity, ease: 'easeInOut', delay: style.delay ?? 0 }}
+
     >
       <span className="self-start text-[7px] font-bold" style={{ color: '#F1C40F' }}>{label}</span>
       <span className="text-xs font-bold" style={{ color: '#F1C40F' }}>{label}</span>
       <span className="self-end rotate-180 text-[7px] font-bold" style={{ color: '#F1C40F' }}>{label}</span>
-    </motion.div>
+    </div>
   )
 }
 
 // ── Joker floating card (red, special)
 function JokerCard({ style }) {
   return (
-    <motion.div
+    <div
       className="pointer-events-none absolute flex flex-col items-center justify-between rounded-xl p-1.5"
       style={{
         width: 44, height: 62,
         background: 'linear-gradient(135deg,#1a0030,#4a0080)',
-        border: '1px solid rgba(192,57,43,0.7)',
-        boxShadow: '0 0 28px rgba(192,57,43,0.5), 0 4px 20px rgba(0,0,0,0.6)',
+        border: '1px solid rgba(192,57,43,0.65)',
+        boxShadow: '0 0 22px rgba(192,57,43,0.5), 0 4px 16px rgba(0,0,0,0.6)',
+        opacity: 0.75,
+        animation: `lg-float ${3.5 + (style.delay ?? 0) % 1.5}s ease-in-out ${style.delay ?? 0}s infinite`,
         ...style,
       }}
-      animate={{
-        y: [0, -18, 0],
-        rotate: [style.rotate ?? 0, (style.rotate ?? 0) - 5, style.rotate ?? 0],
-        boxShadow: [
-          '0 0 20px rgba(192,57,43,0.4)',
-          '0 0 50px rgba(192,57,43,0.8), 0 0 100px rgba(192,57,43,0.2)',
-          '0 0 20px rgba(192,57,43,0.4)',
-        ],
-      }}
-      transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', delay: style.delay ?? 0 }}
     >
       <span className="self-start text-[8px] font-bold" style={{ color: '#e74c3c' }}>🃏</span>
       <span className="text-sm">🃏</span>
       <span className="self-end rotate-180 text-[8px] font-bold" style={{ color: '#e74c3c' }}>🃏</span>
-    </motion.div>
+    </div>
   )
 }
 
@@ -156,9 +156,15 @@ export function LoginPage() {
   const sectionRef = useRef(null)
 
   useEffect(() => {
-    const move = (e) => { mouseX.set(e.clientX); mouseY.set(e.clientY) }
+    let rafId = null
+    const move = (e) => {
+      if (rafId) return
+      rafId = requestAnimationFrame(() => {
+        mouseX.set(e.clientX); mouseY.set(e.clientY); rafId = null
+      })
+    }
     window.addEventListener('mousemove', move)
-    return () => window.removeEventListener('mousemove', move)
+    return () => { window.removeEventListener('mousemove', move); if (rafId) cancelAnimationFrame(rafId) }
   }, [mouseX, mouseY])
 
   useEffect(() => {
@@ -208,6 +214,7 @@ export function LoginPage() {
 
   return (
     <section ref={sectionRef} className="relative flex min-h-[88vh] items-center justify-center px-4">
+      <style>{loginStyles}</style>
       {/* Spotlight */}
       <motion.div className="pointer-events-none fixed z-0"
         style={{
@@ -251,14 +258,14 @@ export function LoginPage() {
             background: 'rgba(5,3,1,0.95)',
             border: '1px solid rgba(241,196,15,0.22)',
             boxShadow: '0 0 80px rgba(241,196,15,0.06), 0 0 160px rgba(192,57,43,0.05), 0 32px 80px rgba(0,0,0,0.7)',
-            backdropFilter: 'blur(28px)',
+            /* no blur */
           }}>
 
           {/* Top gold shimmer */}
-          <motion.div className="absolute inset-x-0 top-0 h-px"
-            style={{ background: 'linear-gradient(90deg,transparent,rgba(241,196,15,0.0),rgba(241,196,15,0.9),rgba(241,196,15,0.0),transparent)' }}
-            animate={{ backgroundPosition: ['200% 0', '-200% 0'] }}
-            transition={{ duration: 3.5, repeat: Infinity, ease: 'linear' }} />
+          <div className="absolute inset-x-0 top-0 h-px" style={{
+            background: 'linear-gradient(90deg,transparent,rgba(241,196,15,0.9),transparent)',
+            backgroundSize: '200% 100%', animation: 'lg-shimmer 3.5s linear infinite',
+          }} />
           {/* Bottom red shimmer */}
           <div className="absolute inset-x-0 bottom-0 h-px"
             style={{ background: 'linear-gradient(90deg,transparent,rgba(192,57,43,0.5),transparent)' }} />
@@ -282,13 +289,7 @@ export function LoginPage() {
                 }}
                 whileHover={{ rotate: [0, -6, 6, 0], scale: 1.06 }}
                 transition={{ duration: 0.45 }}
-                animate={{
-                  boxShadow: [
-                    '0 0 24px rgba(192,57,43,0.6)',
-                    '0 0 48px rgba(192,57,43,1), 0 0 96px rgba(192,57,43,0.3)',
-                    '0 0 24px rgba(192,57,43,0.6)',
-                  ]
-                }}>
+>
                 🃏
               </motion.div>
 
@@ -463,10 +464,10 @@ export function LoginPage() {
                 }}>
                 {/* Shimmer sweep always present */}
                 {!authLoading && (
-                  <motion.span className="pointer-events-none absolute inset-0"
-                    style={{ background: 'linear-gradient(105deg,transparent 30%,rgba(255,255,255,0.15) 50%,transparent 70%)' }}
-                    animate={{ x: ['-100%', '200%'] }}
-                    transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut', repeatDelay: 1.5 }} />
+                  <span className="pointer-events-none absolute inset-0" style={{
+                    background: 'linear-gradient(105deg,transparent 30%,rgba(255,255,255,0.15) 50%,transparent 70%)',
+                    backgroundSize: '200% 100%', animation: 'lg-shimmer 2.5s ease-in-out 1s infinite',
+                  }} />
                 )}
                 {authLoading ? (
                   <span className="flex items-center justify-center gap-2">

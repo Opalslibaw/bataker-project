@@ -1,3 +1,18 @@
+const profileStyles = `
+  @keyframes pf-shimmer {
+    0%   { background-position: -200% center; }
+    100% { background-position:  200% center; }
+  }
+  @keyframes pf-pulse-dot {
+    0%, 100% { opacity: 0.5; box-shadow: 0 0 4px #4ade80; }
+    50%       { opacity: 1;   box-shadow: 0 0 12px #4ade80; }
+  }
+  @keyframes pf-icon-glow {
+    0%, 100% { filter: drop-shadow(0 0 3px var(--glow)); }
+    50%       { filter: drop-shadow(0 0 10px var(--glow)); }
+  }
+`
+
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -105,7 +120,6 @@ function StatCard({ label, value, color, glow, delay, icon }) {
       style={{
         border: `1px solid ${color}25`,
         background: 'rgba(0,0,0,0.55)',
-        backdropFilter: 'blur(12px)',
       }}>
       {/* Top glow line */}
       <div className="absolute inset-x-0 top-0 h-px"
@@ -117,11 +131,9 @@ function StatCard({ label, value, color, glow, delay, icon }) {
       <div className="pointer-events-none absolute right-2 top-2 h-8 w-8"
         style={{ background: `radial-gradient(circle at 100% 0%,${color}20,transparent 70%)` }} />
       <div className="relative">
-        <motion.div className="flex justify-center"
-          animate={{ filter: [`drop-shadow(0 0 4px ${glow}50)`, `drop-shadow(0 0 14px ${glow})`, `drop-shadow(0 0 4px ${glow}50)`] }}
-          transition={{ duration: 2.5, repeat: Infinity, delay }}>
+        <div className="flex justify-center" style={{ filter: `drop-shadow(0 0 6px ${glow})` }}>
           {icon}
-        </motion.div>
+        </div>
         <motion.p className="mt-2 font-perpetua text-3xl font-bold"
           style={{ color, textShadow: `0 0 20px ${glow}` }}
           initial={{ scale: 0.5 }} animate={{ scale: 1 }}
@@ -188,6 +200,7 @@ export function ProfilePage() {
 
   return (
     <section className="relative space-y-8">
+      <style>{profileStyles}</style>
       {/* Ambient bg */}
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden rounded-2xl">
         <div style={{
@@ -213,13 +226,12 @@ export function ProfilePage() {
           background: 'rgba(0,0,0,0.6)',
           border: '1px solid rgba(241,196,15,0.18)',
           boxShadow: '0 0 60px rgba(241,196,15,0.05), 0 0 120px rgba(192,57,43,0.04)',
-          backdropFilter: 'blur(16px)',
-        }}>
+          }}>
         {/* Top shimmer */}
-        <motion.div className="absolute inset-x-0 top-0 h-px"
-          style={{ background: 'linear-gradient(90deg,transparent,rgba(241,196,15,0.8),transparent)' }}
-          animate={{ backgroundPosition: ['200% 0', '-200% 0'] }}
-          transition={{ duration: 4, repeat: Infinity, ease: 'linear' }} />
+        <div className="absolute inset-x-0 top-0 h-px" style={{
+          background: 'linear-gradient(90deg,transparent,rgba(241,196,15,0.8),transparent)',
+          backgroundSize: '200% 100%', animation: 'pf-shimmer 4s linear infinite',
+        }} />
         {/* Bottom line */}
         <div className="absolute inset-x-0 bottom-0 h-px"
           style={{ background: 'linear-gradient(90deg,transparent,rgba(142,68,173,0.4),transparent)' }} />
@@ -259,27 +271,22 @@ export function ProfilePage() {
             </motion.div>
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
             {/* Online dot */}
-            <motion.div className="absolute bottom-0.5 right-0.5 h-4 w-4 rounded-full border-2"
-              style={{ background: '#4ade80', borderColor: '#050301', boxShadow: '0 0 8px #4ade80' }}
-              animate={{ boxShadow: ['0 0 4px #4ade80', '0 0 16px #4ade80, 0 0 32px #4ade8060', '0 0 4px #4ade80'] }}
-              transition={{ duration: 2, repeat: Infinity }} />
+            <div className="absolute bottom-0.5 right-0.5 h-4 w-4 rounded-full border-2"
+              style={{ background: '#4ade80', borderColor: '#050301', animation: 'pf-pulse-dot 2s ease-in-out infinite' }} />
           </div>
 
           {/* Info */}
           <div className="flex min-w-0 flex-1 flex-col gap-1">
             <motion.p className="font-perpetua text-2xl md:text-3xl truncate"
               style={{ color: '#f5d87a', textShadow: '0 0 16px rgba(241,196,15,0.3)' }}
-              animate={{ textShadow: ['0 0 10px rgba(241,196,15,0.2)', '0 0 24px rgba(241,196,15,0.5)', '0 0 10px rgba(241,196,15,0.2)'] }}
-              transition={{ duration: 3, repeat: Infinity }}>
+>
               {username}
             </motion.p>
             <p className="truncate text-xs" style={{ color: 'rgba(241,196,15,0.38)' }}>{user?.email}</p>
             <div className="flex items-center gap-1.5">
               <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold"
                 style={{ background: 'rgba(39,174,96,0.12)', border: '1px solid rgba(39,174,96,0.3)', color: '#4ade80' }}>
-                <motion.span className="h-1.5 w-1.5 rounded-full bg-green-400"
-                  animate={{ opacity: [0.5, 1, 0.5] }}
-                  transition={{ duration: 1.5, repeat: Infinity }} />
+                <span className="h-1.5 w-1.5 rounded-full bg-green-400" style={{ animation: 'pf-pulse-dot 1.5s ease-in-out infinite' }} />
                 Online
               </span>
               <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.25)' }}>Klik foto untuk ganti avatar</span>
@@ -350,10 +357,10 @@ export function ProfilePage() {
                 initial={{ width: 0 }} animate={{ width: `${winRate}%` }}
                 transition={{ duration: 1.2, delay: 0.65, ease: [0.22, 1, 0.36, 1] }}
                 style={{ background: 'linear-gradient(90deg,#16a34a,#4ade80)', boxShadow: '0 0 12px rgba(74,222,128,0.7)' }}>
-                <motion.div className="absolute inset-0"
-                  style={{ background: 'linear-gradient(90deg,transparent 0%,rgba(255,255,255,0.25) 50%,transparent 100%)' }}
-                  animate={{ x: ['-100%', '200%'] }}
-                  transition={{ duration: 2, repeat: Infinity, ease: 'linear', delay: 1.5 }} />
+                <div className="absolute inset-0" style={{
+                  background: 'linear-gradient(90deg,transparent 0%,rgba(255,255,255,0.25) 50%,transparent 100%)',
+                  backgroundSize: '200% 100%', animation: 'pf-shimmer 2s linear 1.5s infinite',
+                }} />
               </motion.div>
             </div>
           </motion.div>
@@ -407,7 +414,6 @@ export function ProfilePage() {
               style={{
                 border: `1px solid ${m.border}`,
                 background: 'rgba(0,0,0,0.55)',
-                backdropFilter: 'blur(12px)',
                 transition: 'box-shadow 0.3s ease',
               }}>
               {/* Top shimmer line */}
@@ -439,10 +445,10 @@ export function ProfilePage() {
                   className="relative w-full overflow-hidden rounded-xl py-2.5 text-sm font-bold tracking-wide text-white"
                   style={{ background: m.gradient, cursor: 'pointer', border: 'none', boxShadow: `0 0 16px ${m.glow}` }}>
                   {/* Shimmer */}
-                  <motion.span className="pointer-events-none absolute inset-0"
-                    style={{ background: 'linear-gradient(105deg,transparent 30%,rgba(255,255,255,0.12) 50%,transparent 70%)' }}
-                    animate={{ x: ['-100%', '200%'] }}
-                    transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut', repeatDelay: 2 }} />
+                  <span className="pointer-events-none absolute inset-0" style={{
+                    background: 'linear-gradient(105deg,transparent 30%,rgba(255,255,255,0.12) 50%,transparent 70%)',
+                    backgroundSize: '200% 100%', animation: 'pf-shimmer 2.5s ease-in-out 1s infinite',
+                  }} />
                   <span className="relative z-10">{m.btnLabel}</span>
                 </motion.button>
               </div>
