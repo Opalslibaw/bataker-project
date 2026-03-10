@@ -4,11 +4,13 @@ import { motion, AnimatePresence, useMotionValue, useSpring } from 'framer-motio
 import { useDarkMode } from '../hooks/useDarkMode.js'
 import { useAuth } from '../hooks/useAuth.jsx'
 import { MusicPlayer } from '../components/MusicPlayer.jsx'
+import { CoinDisplay } from '../components/CoinDisplay.jsx'
 
 const NAV = [
   { label: 'Home', to: '/' },
   { label: 'History', to: '/history' },
   { label: 'Lobby', to: '/lobby' },
+  { label: 'Leaderboard', to: '/leaderboard' },
 ]
 
 /* 5 kartu tersebar di area kanan — posisi dari center container */
@@ -352,6 +354,7 @@ export function HomePage() {
           </nav>
           <div className="ml-auto flex shrink-0 items-center gap-2">
             <div className="hidden items-center gap-2 md:flex">
+              {user && <CoinDisplay />}
               <motion.button type="button" onClick={() => setShowShare(true)} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                 className="rounded-full px-3 py-1.5 text-xs font-medium"
                 style={{ border: '1px solid rgba(241,196,15,0.28)', color: 'rgba(241,196,15,0.75)', background: 'rgba(0,0,0,0.4)', cursor: 'pointer' }}>
@@ -415,6 +418,7 @@ export function HomePage() {
                 ))}
               </nav>
               <div className="mt-auto flex flex-col gap-2 px-4 pb-8 pt-4" style={{ borderTop: '1px solid rgba(241,196,15,0.1)' }}>
+                {user && <div className="flex justify-center pb-1"><CoinDisplay compact /></div>}
                 {user ? (
                   <button type="button" onClick={() => { handleLogout(); setMobileMenu(false) }}
                     style={{ cursor: 'pointer', borderRadius: 12, padding: '8px 16px', fontSize: 14, fontWeight: 600, color: '#e74c3c', border: '1px solid rgba(192,57,43,0.4)', background: 'transparent' }}>

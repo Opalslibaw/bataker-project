@@ -6,6 +6,7 @@ import { GamePage } from './pages/Game.jsx'
 import { HistoryPage } from './pages/History.jsx'
 import { ProfilePage } from './pages/Profile.jsx'
 import { MultiplayerGamePage } from './pages/MultiplayerGame.jsx'
+import { LeaderboardPage } from './pages/Leaderboard.jsx'
 import { Layout } from './components/Layout.jsx'
 import { ProtectedRoute } from './components/ProtectedRoute.jsx'
 
@@ -20,6 +21,7 @@ function App() {
         {/* Public */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/history" element={<HistoryPage />} />
+        <Route path="/leaderboard" element={<LeaderboardPage />} />
 
         {/* Protected */}
         <Route element={<ProtectedRoute />}>
