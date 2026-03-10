@@ -11,19 +11,46 @@ const NAV = [
   { label: 'Lobby', to: '/lobby' },
 ]
 
-/* Kartu tersebar secara natural di area kanan — tidak tumpuk */
+/* 5 kartu tersebar di area kanan — posisi dari center container */
 const CARDS = [
-  { id: 1, label: 'A♠', rot: -28, ox: -170, oy: -55, isJoker: false },
-  { id: 2, label: 'K♥', rot: -12, ox: -82,  oy: -70, isJoker: false },
-  { id: 3, label: '🃏', rot:   3, ox:  10,  oy: -60, isJoker: true  },
-  { id: 4, label: 'Q♦', rot:  17, ox:  98,  oy: -52, isJoker: false },
-  { id: 5, label: '10♣',rot:  30, ox:  175, oy: -42, isJoker: false },
+  { id: 1, label: 'A♠', rot: -32, ox: -195, oy: 20,  isJoker: false },
+  { id: 2, label: 'K♥', rot: -14, ox: -100, oy: -25, isJoker: false },
+  { id: 3, label: '🃏', rot:   1, ox:   0,  oy: -40, isJoker: true  },
+  { id: 4, label: 'Q♦', rot:  16, ox:  100, oy: -18, isJoker: false },
+  { id: 5, label: '10♣',rot:  32, ox:  195, oy:  28, isJoker: false },
+]
+
+/* Mobile particle symbols — pure CSS, zero JS overhead */
+const PARTICLES = [
+  { sym: '♠', x: 8,  y: 12, s: 11, d: 0,    dur: 7   },
+  { sym: '♥', x: 18, y: 55, s: 9,  d: 1.2,  dur: 9   },
+  { sym: '♦', x: 30, y: 25, s: 13, d: 2.5,  dur: 6.5 },
+  { sym: '♣', x: 45, y: 70, s: 8,  d: 0.8,  dur: 8   },
+  { sym: '♠', x: 60, y: 15, s: 10, d: 3.1,  dur: 7.5 },
+  { sym: '♥', x: 72, y: 60, s: 12, d: 1.8,  dur: 6   },
+  { sym: '♦', x: 83, y: 35, s: 9,  d: 0.4,  dur: 9.5 },
+  { sym: '♣', x: 92, y: 80, s: 11, d: 2.2,  dur: 7   },
+  { sym: '♠', x: 15, y: 85, s: 8,  d: 3.6,  dur: 8.5 },
+  { sym: '♥', x: 50, y: 42, s: 14, d: 1.5,  dur: 6   },
+  { sym: '♦', x: 78, y: 8,  s: 10, d: 4.0,  dur: 7   },
+  { sym: '♣', x: 38, y: 90, s: 9,  d: 0.6,  dur: 9   },
+  { sym: '♠', x: 65, y: 48, s: 12, d: 2.8,  dur: 6.5 },
+  { sym: '♥', x: 25, y: 38, s: 8,  d: 1.1,  dur: 8   },
+  { sym: '♦', x: 90, y: 55, s: 10, d: 3.3,  dur: 7.5 },
+  { sym: '♣', x: 55, y: 20, s: 11, d: 0.9,  dur: 6   },
+  { sym: '♠', x: 5,  y: 65, s: 9,  d: 2.0,  dur: 9   },
+  { sym: '♥', x: 70, y: 78, s: 13, d: 4.2,  dur: 7   },
 ]
 
 const homeStyles = `
   @keyframes hm-float {
-    0%, 100% { transform: translateY(0px); }
-    50%       { transform: translateY(-10px); }
+    0%, 100% { transform: translateY(0px) rotate(var(--rot,0deg)); }
+    50%       { transform: translateY(-12px) rotate(var(--rot,0deg)); }
+  }
+  @keyframes hm-float-up {
+    0%   { transform: translateY(0px)   rotate(var(--pr,0deg)); opacity: var(--po, 0.2); }
+    50%  { transform: translateY(-20px) rotate(var(--pr,0deg)); opacity: calc(var(--po, 0.2) * 1.5); }
+    100% { transform: translateY(0px)   rotate(var(--pr,0deg)); opacity: var(--po, 0.2); }
   }
   @keyframes hm-spin {
     to { transform: rotate(360deg); }
@@ -48,6 +75,13 @@ const homeStyles = `
     animation: hm-shimmer 2.5s ease-in-out 1s infinite;
     background-size: 200% 100%;
   }
+  .hm-particle {
+    position: absolute;
+    pointer-events: none;
+    user-select: none;
+    font-family: serif;
+    will-change: transform, opacity;
+  }
 `
 
 function Spotlight() {
@@ -55,19 +89,15 @@ function Spotlight() {
   const y  = useMotionValue(-600)
   const sx = useSpring(x, { stiffness: 60, damping: 18 })
   const sy = useSpring(y, { stiffness: 60, damping: 18 })
-
   useEffect(() => {
     let rafId = null
     const move = (e) => {
       if (rafId) return
-      rafId = requestAnimationFrame(() => {
-        x.set(e.clientX); y.set(e.clientY); rafId = null
-      })
+      rafId = requestAnimationFrame(() => { x.set(e.clientX); y.set(e.clientY); rafId = null })
     }
     window.addEventListener('mousemove', move, { passive: true })
     return () => { window.removeEventListener('mousemove', move); if (rafId) cancelAnimationFrame(rafId) }
   }, [x, y])
-
   return (
     <motion.div className="pointer-events-none fixed z-10" style={{
       left: sx, top: sy, width: 600, height: 600, x: '-50%', y: '-50%',
@@ -96,25 +126,9 @@ function LoadingScreen() {
       style={{ background: 'radial-gradient(ellipse at center,#0e0007 0%,#000 70%)' }}
       initial={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.6 }}>
       <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{
-          position: 'absolute', width: 200, height: 200, borderRadius: '50%',
-          background: 'radial-gradient(circle,rgba(192,57,43,0.18) 0%,transparent 70%)',
-        }} />
-        <div style={{
-          width: 108, height: 108, borderRadius: '50%',
-          border: '2px solid transparent',
-          borderTopColor: '#e74c3c',
-          borderRightColor: 'rgba(192,57,43,0.3)',
-          animation: 'hm-spin 1.6s linear infinite',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          <div style={{
-            width: 72, height: 100, borderRadius: 12,
-            background: 'linear-gradient(145deg,#1a0030,#4a0080)',
-            border: '1.5px solid rgba(192,57,43,0.8)',
-            boxShadow: '0 0 28px rgba(192,57,43,0.7)',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4,
-          }}>
+        <div style={{ position: 'absolute', width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle,rgba(192,57,43,0.18) 0%,transparent 70%)' }} />
+        <div style={{ width: 108, height: 108, borderRadius: '50%', border: '2px solid transparent', borderTopColor: '#e74c3c', borderRightColor: 'rgba(192,57,43,0.3)', animation: 'hm-spin 1.6s linear infinite', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: 72, height: 100, borderRadius: 12, background: 'linear-gradient(145deg,#1a0030,#4a0080)', border: '1.5px solid rgba(192,57,43,0.8)', boxShadow: '0 0 28px rgba(192,57,43,0.7)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
             <span style={{ fontSize: 10, color: '#e74c3c' }}>🃏</span>
             <span style={{ fontSize: 28 }}>🃏</span>
             <span style={{ fontSize: 10, color: '#e74c3c', transform: 'rotate(180deg)' }}>🃏</span>
@@ -122,60 +136,41 @@ function LoadingScreen() {
         </div>
       </div>
       <div style={{ textAlign: 'center' }}>
-        <p className="font-perpetua text-3xl tracking-[0.4em]"
-          style={{ color: '#F1C40F', animation: 'hm-glow-text 1.8s ease-in-out infinite' }}>
-          KARTU BATAK
-        </p>
-        <p className="text-[9px] uppercase tracking-[0.6em] mt-1" style={{ color: 'rgba(241,196,15,0.35)' }}>
-          Bataker Project
-        </p>
+        <p className="font-perpetua text-3xl tracking-[0.4em]" style={{ color: '#F1C40F', animation: 'hm-glow-text 1.8s ease-in-out infinite' }}>KARTU BATAK</p>
+        <p className="text-[9px] uppercase tracking-[0.6em] mt-1" style={{ color: 'rgba(241,196,15,0.35)' }}>Bataker Project</p>
       </div>
       <div style={{ width: 160, height: 2, background: 'rgba(241,196,15,0.1)', borderRadius: 9999, overflow: 'hidden' }}>
-        <div style={{
-          height: '100%', width: '45%', borderRadius: 9999,
-          background: 'linear-gradient(90deg,#e74c3c,#F1C40F,#8e44ad)',
-          animation: 'hm-loader 1.4s ease-in-out infinite',
-        }} />
+        <div style={{ height: '100%', width: '45%', borderRadius: 9999, background: 'linear-gradient(90deg,#e74c3c,#F1C40F,#8e44ad)', animation: 'hm-loader 1.4s ease-in-out infinite' }} />
       </div>
     </motion.div>
   )
 }
 
-/* ── DraggableCard ──
-   Di mobile: pointer-events-none, jadi pure dekorasi background.
-   Di desktop: bisa diseret & dilempar.
-   z-index selalu di bawah konten utama (max z-5 saat idle, z-20 saat drag).
-*/
-function DraggableCard({ card, isMobile }) {
+/* ── DraggableCard — DESKTOP ONLY ── */
+function DraggableCard({ card }) {
   const isJoker = card.isJoker
   const dragX   = useMotionValue(0)
   const dragY   = useMotionValue(0)
   const springX = useSpring(dragX, { stiffness: 200, damping: 22, mass: 0.8 })
   const springY = useSpring(dragY, { stiffness: 200, damping: 22, mass: 0.8 })
-
   const [isDragging, setIsDragging] = useState(false)
-  const velRef    = useRef({ x: 0, y: 0 })
-  const prevPos   = useRef({ x: 0, y: 0 })
-  const prevTime  = useRef(Date.now())
-  const retTimer  = useRef(null)
+  const velRef   = useRef({ x: 0, y: 0 })
+  const prevPos  = useRef({ x: 0, y: 0 })
+  const prevTime = useRef(Date.now())
+  const retTimer = useRef(null)
 
   const handlePointerDown = useCallback((e) => {
-    if (isMobile) return
     e.preventDefault(); e.stopPropagation()
     if (retTimer.current) clearTimeout(retTimer.current)
     setIsDragging(true)
-    const cx0 = e.touches ? e.touches[0].clientX : e.clientX
-    const cy0 = e.touches ? e.touches[0].clientY : e.clientY
-    prevPos.current = { x: cx0, y: cy0 }; prevTime.current = Date.now(); velRef.current = { x: 0, y: 0 }
-
+    prevPos.current = { x: e.clientX, y: e.clientY }
+    prevTime.current = Date.now(); velRef.current = { x: 0, y: 0 }
     const onMove = (ev) => {
-      const cx = ev.touches ? ev.touches[0].clientX : ev.clientX
-      const cy = ev.touches ? ev.touches[0].clientY : ev.clientY
-      const now = Date.now(); const dt = Math.max(now - prevTime.current, 1)
-      velRef.current = { x: (cx - prevPos.current.x) / dt * 16, y: (cy - prevPos.current.y) / dt * 16 }
-      dragX.set(dragX.get() + (cx - prevPos.current.x))
-      dragY.set(dragY.get() + (cy - prevPos.current.y))
-      prevPos.current = { x: cx, y: cy }; prevTime.current = now
+      const dt = Math.max(Date.now() - prevTime.current, 1)
+      velRef.current = { x: (ev.clientX - prevPos.current.x) / dt * 16, y: (ev.clientY - prevPos.current.y) / dt * 16 }
+      dragX.set(dragX.get() + (ev.clientX - prevPos.current.x))
+      dragY.set(dragY.get() + (ev.clientY - prevPos.current.y))
+      prevPos.current = { x: ev.clientX, y: ev.clientY }; prevTime.current = Date.now()
     }
     const onUp = () => {
       setIsDragging(false)
@@ -185,61 +180,98 @@ function DraggableCard({ card, isMobile }) {
         dragY.set(dragY.get() + velRef.current.y * 18)
         retTimer.current = setTimeout(() => { dragX.set(0); dragY.set(0) }, 650)
       } else { dragX.set(0); dragY.set(0) }
-      window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp)
-      window.removeEventListener('touchmove', onMove); window.removeEventListener('touchend', onUp)
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
     }
-    window.addEventListener('mousemove', onMove, { passive: false }); window.addEventListener('mouseup', onUp)
-    window.addEventListener('touchmove', onMove, { passive: false }); window.addEventListener('touchend', onUp)
-  }, [dragX, dragY, isMobile])
-
-  /* z-index: saat drag naik ke 20, saat idle SELALU di bawah konten (z 1-5) */
-  const zIdx = isDragging ? 20 : card.id
+    window.addEventListener('mousemove', onMove, { passive: false })
+    window.addEventListener('mouseup', onUp)
+  }, [dragX, dragY])
 
   return (
     <motion.div
       onPointerDown={handlePointerDown}
-      className="absolute flex flex-col items-center justify-between rounded-2xl p-3 select-none"
+      className="absolute flex flex-col items-center justify-between rounded-2xl select-none"
       style={{
-        width: 78, height: 110,
-        /* posisi tersebar dari tengah container */
-        left: '50%',
-        top: '50%',
+        width: 96, height: 132, padding: '10px 10px',
+        left: '50%', top: '50%',
         translateX: `calc(-50% + ${card.ox}px)`,
         translateY: `calc(-50% + ${card.oy}px)`,
-        x: springX,
-        y: springY,
+        x: springX, y: springY,
         rotate: card.rot,
-        cursor: isMobile ? 'default' : (isDragging ? 'grabbing' : 'grab'),
-        pointerEvents: isMobile ? 'none' : 'auto',
-        animation: !isDragging ? `hm-float ${3 + card.id * 0.4}s ease-in-out ${card.id * 0.18}s infinite` : 'none',
-        background: isJoker
-          ? 'linear-gradient(135deg,#1a0030,#4a0080)'
-          : 'linear-gradient(135deg,#0a0705,#1f140a)',
-        border: isJoker
-          ? '1px solid rgba(192,57,43,0.85)'
-          : '1px solid rgba(241,196,15,0.45)',
+        '--rot': `${card.rot}deg`,
+        cursor: isDragging ? 'grabbing' : 'grab',
+        animation: !isDragging ? `hm-float ${3 + card.id * 0.4}s ease-in-out ${card.id * 0.2}s infinite` : 'none',
+        background: isJoker ? 'linear-gradient(145deg,#150025,#3d0070)' : 'linear-gradient(145deg,#0c0907,#211609)',
+        border: isJoker ? '1.5px solid rgba(192,57,43,0.9)' : '1.5px solid rgba(241,196,15,0.5)',
         boxShadow: isDragging
-          ? (isJoker ? '0 0 90px rgba(192,57,43,1),0 24px 48px rgba(0,0,0,0.9)' : '0 0 70px rgba(241,196,15,0.9),0 24px 48px rgba(0,0,0,0.9)')
-          : (isJoker ? '0 0 28px rgba(192,57,43,0.5),0 6px 18px rgba(0,0,0,0.6)' : '0 0 14px rgba(241,196,15,0.2),0 6px 16px rgba(0,0,0,0.55)'),
-        zIndex: zIdx,
-        touchAction: 'none',
-        willChange: 'transform',
-        /* opacity sedikit lebih rendah di mobile agar terlihat sebagai latar */
-        opacity: isMobile ? 0.45 : 1,
+          ? (isJoker ? '0 0 100px rgba(192,57,43,1),0 28px 56px rgba(0,0,0,0.95)' : '0 0 80px rgba(241,196,15,0.95),0 28px 56px rgba(0,0,0,0.95)')
+          : (isJoker ? '0 0 32px rgba(192,57,43,0.55),0 8px 24px rgba(0,0,0,0.75)' : '0 0 18px rgba(241,196,15,0.25),0 8px 20px rgba(0,0,0,0.65)'),
+        zIndex: isDragging ? 50 : isJoker ? 12 : card.id + 1,
+        touchAction: 'none', willChange: 'transform',
       }}
-      whileHover={(!isMobile && !isDragging) ? { scale: 1.1 } : {}}
+      whileHover={!isDragging ? { scale: 1.12, zIndex: 40 } : {}}
     >
+      {/* top line */}
       <div className="absolute inset-x-0 top-0 h-px rounded-t-2xl pointer-events-none"
-        style={{ background: isJoker
-          ? 'linear-gradient(90deg,transparent,rgba(192,57,43,0.5),transparent)'
-          : 'linear-gradient(90deg,transparent,rgba(241,196,15,0.35),transparent)' }} />
-      <span className="self-start text-xs font-bold" style={{ color: isJoker ? '#e74c3c' : '#F1C40F' }}>{card.label}</span>
-      <span className="font-perpetua text-2xl"
-        style={{ color: isJoker ? '#e74c3c' : '#F1C40F', filter: isJoker ? 'drop-shadow(0 0 6px #e74c3c)' : 'drop-shadow(0 0 5px #F1C40F)' }}>
+        style={{ background: isJoker ? 'linear-gradient(90deg,transparent,rgba(192,57,43,0.6),transparent)' : 'linear-gradient(90deg,transparent,rgba(241,196,15,0.45),transparent)' }} />
+      {/* top-left pip */}
+      <div className="self-start flex flex-col items-center" style={{ lineHeight: 1.1 }}>
+        <span style={{ fontSize: 12, fontWeight: 700, color: isJoker ? '#e74c3c' : '#F1C40F' }}>
+          {isJoker ? 'J' : card.label.replace(/[♠♥♦♣]/g, '')}
+        </span>
+        <span style={{ fontSize: 10, color: isJoker ? '#e74c3c' : '#F1C40F' }}>
+          {isJoker ? '★' : (card.label.match(/[♠♥♦♣]/)?.[0] ?? '')}
+        </span>
+      </div>
+      {/* center label */}
+      <span className="font-perpetua text-2xl font-bold"
+        style={{ color: isJoker ? '#e74c3c' : '#F1C40F', filter: isJoker ? 'drop-shadow(0 0 8px #e74c3c)' : 'drop-shadow(0 0 6px #F1C40F)' }}>
         {card.label}
       </span>
-      <span className="self-end rotate-180 text-xs font-bold" style={{ color: isJoker ? '#e74c3c' : '#F1C40F' }}>{card.label}</span>
+      {/* bottom-right pip (rotated) */}
+      <div className="self-end flex flex-col-reverse items-center rotate-180" style={{ lineHeight: 1.1 }}>
+        <span style={{ fontSize: 12, fontWeight: 700, color: isJoker ? '#e74c3c' : '#F1C40F' }}>
+          {isJoker ? 'J' : card.label.replace(/[♠♥♦♣]/g, '')}
+        </span>
+        <span style={{ fontSize: 10, color: isJoker ? '#e74c3c' : '#F1C40F' }}>
+          {isJoker ? '★' : (card.label.match(/[♠♥♦♣]/)?.[0] ?? '')}
+        </span>
+      </div>
+      {/* inner ambient glow */}
+      <div className="absolute inset-0 rounded-2xl pointer-events-none"
+        style={{ background: isJoker ? 'radial-gradient(circle at 50% 25%,rgba(192,57,43,0.14),transparent 65%)' : 'radial-gradient(circle at 50% 25%,rgba(241,196,15,0.08),transparent 65%)' }} />
     </motion.div>
+  )
+}
+
+/* ── MobileCardParticles — pure CSS, zero JS ── */
+function MobileCardParticles() {
+  return (
+    <div aria-hidden="true" className="hm-particle-layer"
+      style={{ position: 'absolute', inset: 0, overflow: 'hidden', zIndex: 0, pointerEvents: 'none' }}>
+      {PARTICLES.map((p, i) => {
+        const isRed = p.sym === '♥' || p.sym === '♦'
+        const opacity = 0.18 + (i % 5) * 0.055
+        return (
+          <span
+            key={i}
+            className="hm-particle"
+            style={{
+              left: `${p.x}%`,
+              top:  `${p.y}%`,
+              fontSize: p.s,
+              color: isRed ? `rgba(192,57,43,${opacity})` : `rgba(241,196,15,${opacity})`,
+              '--pr':  `${-18 + (i % 7) * 6}deg`,
+              '--po':  opacity,
+              animation: `hm-float-up ${p.dur}s ease-in-out ${p.d}s infinite`,
+              textShadow: isRed ? `0 0 8px rgba(192,57,43,0.35)` : `0 0 8px rgba(241,196,15,0.28)`,
+            }}
+          >
+            {p.sym}
+          </span>
+        )
+      })}
+    </div>
   )
 }
 
@@ -252,13 +284,14 @@ export function HomePage() {
   const [copied, setCopied]         = useState(false)
   const [mobileMenu, setMobileMenu] = useState(false)
   const [showHint, setShowHint]     = useState(false)
-  const [isMobile, setIsMobile]     = useState(false)
+  const [isMobile, setIsMobile]     = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth < 768 : false
+  )
 
   const username = profile?.username || (user?.email ? user.email.split('@')[0] : null)
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
-    check()
     window.addEventListener('resize', check, { passive: true })
     return () => window.removeEventListener('resize', check)
   }, [])
@@ -268,7 +301,7 @@ export function HomePage() {
       setIsLoading(false)
       if (!isMobile) {
         setTimeout(() => setShowHint(true),  400)
-        setTimeout(() => setShowHint(false), 3600)
+        setTimeout(() => setShowHint(false), 3800)
       }
     }, 1800)
     return () => clearTimeout(t)
@@ -277,7 +310,7 @@ export function HomePage() {
   const handleLogout = async () => { await signOut(); navigate('/login', { replace: true }) }
   const handleCopy   = async () => {
     try { await navigator.clipboard.writeText(window.location.href); setCopied(true); setTimeout(() => setCopied(false), 1500) }
-    catch { /* ignore */ }
+    catch { /**/ }
   }
 
   return (
@@ -287,16 +320,12 @@ export function HomePage() {
       <StaticBg />
       <Spotlight />
 
-      {/* LOADING */}
       <AnimatePresence>{isLoading && <LoadingScreen />}</AnimatePresence>
 
       {/* NAVBAR */}
       <header className="fixed inset-x-0 top-0 z-30 w-full"
         style={{ background: 'rgba(0,0,0,0.9)', borderBottom: '1px solid rgba(241,196,15,0.12)' }}>
-        <div className="absolute inset-x-0 top-0 h-px" style={{
-          background: 'linear-gradient(90deg,transparent,rgba(241,196,15,0.9),transparent)',
-          backgroundSize: '200% 100%', animation: 'hm-shimmer 4s linear infinite',
-        }} />
+        <div className="absolute inset-x-0 top-0 h-px" style={{ background: 'linear-gradient(90deg,transparent,rgba(241,196,15,0.9),transparent)', backgroundSize: '200% 100%', animation: 'hm-shimmer 4s linear infinite' }} />
         <div className="flex w-full items-center gap-4 px-4 py-3 md:px-8">
           <Link to="/" className="flex shrink-0 items-center gap-3">
             <motion.div whileHover={{ scale: 1.12, rotate: -5 }} whileTap={{ scale: 0.95 }}
@@ -305,8 +334,7 @@ export function HomePage() {
               🃏
             </motion.div>
             <div className="hidden leading-tight sm:block">
-              <p className="font-perpetua text-xl font-semibold"
-                style={{ color: '#F1C40F', textShadow: '0 0 14px rgba(241,196,15,0.55)' }}>Kartu Batak</p>
+              <p className="font-perpetua text-xl font-semibold" style={{ color: '#F1C40F', textShadow: '0 0 14px rgba(241,196,15,0.55)' }}>Kartu Batak</p>
               <p className="text-[9px] uppercase tracking-[0.35em]" style={{ color: 'rgba(241,196,15,0.38)' }}>Bataker Project</p>
             </div>
           </Link>
@@ -316,10 +344,7 @@ export function HomePage() {
                 <motion.span className="relative block rounded-full px-4 py-2 text-sm font-semibold"
                   style={{ color: item.to === '/' ? '#fff' : 'rgba(241,196,15,0.6)' }}
                   whileHover={{ color: '#F1C40F' }} whileTap={{ scale: 0.93 }}>
-                  {item.to === '/' && (
-                    <span className="absolute inset-0 rounded-full"
-                      style={{ background: 'linear-gradient(135deg,#5b1fa0,#8e44ad)', boxShadow: '0 0 18px rgba(142,68,173,0.7)' }} />
-                  )}
+                  {item.to === '/' && <span className="absolute inset-0 rounded-full" style={{ background: 'linear-gradient(135deg,#5b1fa0,#8e44ad)', boxShadow: '0 0 18px rgba(142,68,173,0.7)' }} />}
                   <span className="relative z-10">{item.label}</span>
                 </motion.span>
               </Link>
@@ -327,8 +352,7 @@ export function HomePage() {
           </nav>
           <div className="ml-auto flex shrink-0 items-center gap-2">
             <div className="hidden items-center gap-2 md:flex">
-              <motion.button type="button" onClick={() => setShowShare(true)}
-                whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+              <motion.button type="button" onClick={() => setShowShare(true)} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                 className="rounded-full px-3 py-1.5 text-xs font-medium"
                 style={{ border: '1px solid rgba(241,196,15,0.28)', color: 'rgba(241,196,15,0.75)', background: 'rgba(0,0,0,0.4)', cursor: 'pointer' }}>
                 Share
@@ -338,13 +362,11 @@ export function HomePage() {
                   {username && (
                     <div className="flex items-center gap-1.5 rounded-full px-3 py-1 text-xs"
                       style={{ border: '1px solid rgba(241,196,15,0.2)', background: 'rgba(0,0,0,0.4)', color: 'rgba(241,196,15,0.85)' }}>
-                      <span className="h-1.5 w-1.5 rounded-full bg-green-400"
-                        style={{ animation: 'hm-pulse-dot 2s ease-in-out infinite' }} />
+                      <span className="h-1.5 w-1.5 rounded-full bg-green-400" style={{ animation: 'hm-pulse-dot 2s ease-in-out infinite' }} />
                       {username}
                     </div>
                   )}
-                  <motion.button type="button" onClick={handleLogout}
-                    whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                  <motion.button type="button" onClick={handleLogout} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                     className="rounded-full px-4 py-1.5 text-sm font-semibold"
                     style={{ border: '1px solid rgba(192,57,43,0.5)', color: '#e74c3c', background: 'transparent', cursor: 'pointer' }}>
                     Logout
@@ -356,8 +378,7 @@ export function HomePage() {
                   Login
                 </Link>
               )}
-              <motion.button type="button" onClick={toggleDarkMode}
-                whileHover={{ scale: 1.12, rotate: 20 }} whileTap={{ scale: 0.9 }}
+              <motion.button type="button" onClick={toggleDarkMode} whileHover={{ scale: 1.12, rotate: 20 }} whileTap={{ scale: 0.9 }}
                 className="flex h-8 w-8 items-center justify-center rounded-full text-sm"
                 style={{ border: '1px solid rgba(241,196,15,0.3)', background: 'rgba(0,0,0,0.4)', color: '#F1C40F', cursor: 'pointer' }}>
                 {isDark ? '☀' : '🌙'}
@@ -377,17 +398,14 @@ export function HomePage() {
       <AnimatePresence>
         {mobileMenu && (
           <>
-            <motion.div className="fixed inset-0 z-40 bg-black/70"
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={() => setMobileMenu(false)} />
+            <motion.div className="fixed inset-0 z-40 bg-black/70" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setMobileMenu(false)} />
             <motion.div className="fixed inset-y-0 right-0 z-50 flex w-72 flex-col"
               style={{ background: 'rgba(6,3,1,0.98)', borderLeft: '1px solid rgba(241,196,15,0.15)' }}
               initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
               transition={{ type: 'spring', stiffness: 380, damping: 38 }}>
               <div className="flex items-center justify-between px-6 py-4">
                 <span className="font-perpetua text-lg text-yellow-400">Menu</span>
-                <button type="button" onClick={() => setMobileMenu(false)}
-                  style={{ color: 'rgba(241,196,15,0.7)', cursor: 'pointer', background: 'none', border: 'none', fontSize: 18 }}>✕</button>
+                <button type="button" onClick={() => setMobileMenu(false)} style={{ color: 'rgba(241,196,15,0.7)', cursor: 'pointer', background: 'none', border: 'none', fontSize: 18 }}>✕</button>
               </div>
               <nav className="flex flex-col gap-1 px-4">
                 {NAV.map(item => (
@@ -396,8 +414,7 @@ export function HomePage() {
                     style={{ color: 'rgba(241,196,15,0.8)' }}>{item.label}</Link>
                 ))}
               </nav>
-              <div className="mt-auto flex flex-col gap-2 px-4 pb-8 pt-4"
-                style={{ borderTop: '1px solid rgba(241,196,15,0.1)' }}>
+              <div className="mt-auto flex flex-col gap-2 px-4 pb-8 pt-4" style={{ borderTop: '1px solid rgba(241,196,15,0.1)' }}>
                 {user ? (
                   <button type="button" onClick={() => { handleLogout(); setMobileMenu(false) }}
                     style={{ cursor: 'pointer', borderRadius: 12, padding: '8px 16px', fontSize: 14, fontWeight: 600, color: '#e74c3c', border: '1px solid rgba(192,57,43,0.4)', background: 'transparent' }}>
@@ -417,17 +434,21 @@ export function HomePage() {
 
       {/* MAIN */}
       <main className="relative z-20 flex min-h-screen w-full flex-col pt-[64px]">
-        <section className="flex flex-1 flex-col items-center justify-center px-6 py-16 md:flex-row md:gap-0 md:px-14 lg:px-24">
 
-          {/* Left – konten teks */}
+        {/* Hero */}
+        <section className="relative flex flex-1 flex-col items-center justify-center px-6 py-16 md:flex-row md:gap-0 md:px-14 lg:px-24">
+
+          {/* Mobile: CSS-only particle background */}
+          {isMobile && <MobileCardParticles />}
+
+          {/* Left – teks utama */}
           <motion.div className="relative z-10 flex-1 space-y-8 text-center md:text-left"
             initial={{ opacity: 0, x: -40 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, delay: 0.2 }}>
             <div className="space-y-3">
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
                 className="inline-flex items-center gap-2 rounded-full px-3 py-1.5"
                 style={{ background: 'rgba(241,196,15,0.08)', border: '1px solid rgba(241,196,15,0.2)' }}>
-                <span className="h-1.5 w-1.5 rounded-full bg-green-400"
-                  style={{ animation: 'hm-pulse-dot 2s ease-in-out infinite' }} />
+                <span className="h-1.5 w-1.5 rounded-full bg-green-400" style={{ animation: 'hm-pulse-dot 2s ease-in-out infinite' }} />
                 <span className="text-[10px] uppercase tracking-[0.35em]" style={{ color: 'rgba(241,196,15,0.7)' }}>
                   {user ? `Halo, ${username}!` : 'Selamat Datang'}
                 </span>
@@ -455,9 +476,7 @@ export function HomePage() {
                 <span className="pointer-events-none absolute inset-0 hm-btn-shimmer"
                   style={{ background: 'linear-gradient(105deg,transparent 30%,rgba(255,255,255,0.18) 50%,transparent 70%)' }} />
                 <span className="relative z-10 flex items-center gap-2.5">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polygon points="5 3 19 12 5 21 5 3"/>
-                  </svg>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                   Main Sekarang
                 </span>
               </motion.button>
@@ -466,9 +485,7 @@ export function HomePage() {
                 className="relative overflow-hidden rounded-full px-8 py-3.5 text-sm font-bold uppercase tracking-[0.2em]"
                 style={{ border: '1px solid rgba(241,196,15,0.4)', color: '#F1C40F', background: 'rgba(0,0,0,0.35)', cursor: 'pointer', position: 'relative', zIndex: 10 }}>
                 <span className="flex items-center gap-2.5">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/>
-                  </svg>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>
                   Lihat History
                 </span>
               </motion.button>
@@ -477,46 +494,32 @@ export function HomePage() {
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }}>
               {[['4–8','Pemain'],['53','Kartu'],['1','Joker']].map(([val, lbl]) => (
                 <motion.div key={lbl} className="text-center" whileHover={{ scale: 1.1 }}>
-                  <p className="font-perpetua text-3xl"
-                    style={{ color: '#F1C40F', textShadow: '0 0 16px rgba(241,196,15,0.65)' }}>{val}</p>
+                  <p className="font-perpetua text-3xl" style={{ color: '#F1C40F', textShadow: '0 0 16px rgba(241,196,15,0.65)' }}>{val}</p>
                   <p className="text-[10px] uppercase tracking-widest" style={{ color: 'rgba(241,196,15,0.4)' }}>{lbl}</p>
                 </motion.div>
               ))}
             </motion.div>
           </motion.div>
 
-          {/* Right – area kartu:
-              - Desktop: relative, interaktif, pointer-events aktif
-              - Mobile: absolute di belakang konten (z-0), dekoratif saja
-          */}
-          <motion.div
-            className="md:relative md:flex-1 md:h-[420px] md:mt-0"
-            style={{
-              /* Mobile: absolute, penuh, z-0 di belakang teks */
-              position: isMobile ? 'absolute' : undefined,
-              inset: isMobile ? 0 : undefined,
-              zIndex: isMobile ? 0 : undefined,
-              height: isMobile ? '100%' : undefined,
-              width: isMobile ? '100%' : undefined,
-              pointerEvents: isMobile ? 'none' : undefined,
-              /* Desktop: beri tinggi fixed agar kartu terlihat */
-              marginTop: isMobile ? 0 : undefined,
-            }}
-            initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, delay: 0.3 }}>
-            {CARDS.map((card) => <DraggableCard key={card.id} card={card} isMobile={isMobile} />)}
-            <AnimatePresence>
-              {showHint && !isMobile && (
-                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
-                  className="absolute bottom-2 left-1/2 -translate-x-1/2 pointer-events-none whitespace-nowrap rounded-full px-4 py-2 text-[10px]"
-                  style={{ background: 'rgba(0,0,0,0.8)', border: '1px solid rgba(241,196,15,0.3)', color: 'rgba(241,196,15,0.8)', zIndex: 15 }}>
-                  ✦ Seret kartu — lempar kencang untuk efek!
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.div>
+          {/* Right – kartu interaktif DESKTOP ONLY */}
+          {!isMobile && (
+            <motion.div className="relative flex-1 h-[480px]"
+              initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, delay: 0.3 }}>
+              {CARDS.map((card) => <DraggableCard key={card.id} card={card} />)}
+              <AnimatePresence>
+                {showHint && (
+                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+                    className="absolute bottom-6 left-1/2 -translate-x-1/2 pointer-events-none whitespace-nowrap rounded-full px-4 py-2 text-[10px]"
+                    style={{ background: 'rgba(0,0,0,0.85)', border: '1px solid rgba(241,196,15,0.3)', color: 'rgba(241,196,15,0.8)', zIndex: 60 }}>
+                    ✦ Seret kartu — lempar kencang untuk efek!
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          )}
         </section>
 
-        {/* FEATURES – z-10 agar selalu di atas kartu */}
+        {/* FEATURES */}
         <section className="relative z-10 w-full px-6 pb-20 md:px-14 lg:px-24">
           <motion.div initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }} transition={{ duration: 0.5 }}
@@ -537,8 +540,7 @@ export function HomePage() {
                 whileHover={{ y: -6, scale: 1.03 }}
                 className="relative overflow-hidden rounded-2xl p-6"
                 style={{ border: '1px solid rgba(241,196,15,0.12)', background: 'rgba(8,5,2,0.92)' }}>
-                <div className="absolute inset-x-0 top-0 h-px"
-                  style={{ background: 'linear-gradient(90deg,transparent,rgba(241,196,15,0.35),transparent)' }} />
+                <div className="absolute inset-x-0 top-0 h-px" style={{ background: 'linear-gradient(90deg,transparent,rgba(241,196,15,0.35),transparent)' }} />
                 <div className="absolute inset-0 rounded-2xl" style={{ background: `radial-gradient(circle at 20% 20%,${f.color},transparent 60%)`, pointerEvents: 'none' }} />
                 <div className="relative">
                   <div style={{ color: f.glow, filter: `drop-shadow(0 0 5px ${f.glow})` }}>{f.icon}</div>
@@ -573,8 +575,7 @@ export function HomePage() {
               <div className="flex gap-2">
                 <input readOnly value={window.location.href} className="flex-1 rounded-xl px-3 py-2.5 text-xs outline-none"
                   style={{ border: '1px solid rgba(241,196,15,0.25)', background: 'rgba(0,0,0,0.6)', color: '#F1C40F' }} />
-                <motion.button type="button" onClick={handleCopy}
-                  whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                <motion.button type="button" onClick={handleCopy} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                   className="rounded-full px-4 py-2 text-xs font-bold text-white"
                   style={{ background: copied ? '#27ae60' : 'linear-gradient(135deg,#5b1fa0,#8e44ad)', cursor: 'pointer', border: 'none' }}>
                   {copied ? '✓' : 'Copy'}
