@@ -1,4 +1,6 @@
 import { supabase } from '../lib/supabase.js'
+import { useSound } from '../hooks/useSound.js'
+import { useDailyBonus } from '../hooks/useDailyBonus.js'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth.jsx'
 import { useEffect, useReducer, useRef, useState } from 'react'
@@ -517,6 +519,8 @@ export function GamePage() {
   const { user, refreshProfile } = useAuth()
   const navigate = useNavigate()
   const statsUpdated = useRef(false)
+  const { playWin, playLose, playCardClick, playCardPick, playPair, playJoker } = useSound()
+  const { recordGamePlayed } = useDailyBonus(user?.id)
 
   useEffect(() => {
     if (state.status !== 'finished' || !user || statsUpdated.current) return
@@ -532,6 +536,10 @@ export function GamePage() {
         games_lost: (data.games_lost || 0) + (iLost ? 1 : 0),
       }).eq('id', user.id)
       refreshProfile()
+      // Sound
+      if (iLost) playLose(); else playWin()
+      // Misi harian
+      await recordGamePlayed(!iLost, false)
     }
     run()
   }, [state.status, user])

@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../hooks/useAuth.jsx'
 import { useMultiplayer } from '../hooks/useMultiplayer.js'
 import { useCoins } from '../hooks/useCoins.js'
+import { useSound } from '../hooks/useSound.js'
+import { useDailyBonus } from '../hooks/useDailyBonus.js'
 import { supabase } from '../lib/supabase.js'
 
 const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K']
@@ -91,7 +93,17 @@ const mpStyles = `
     0%   { background-position: -200% center; }
     100% { background-position:  200% center; }
   }
+  @keyframes mp-timer-drain {
+    from { width: 100%; }
+    to   { width: 0%; }
+  }
+  @keyframes mp-timer-pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.5; }
+  }
 `
+
+const TURN_SECONDS = 30
 
 /* ── PREMIUM SVG ICONS (zero emoji) ── */
 const IcoBolt = ({ size=12 }) => (
@@ -665,6 +677,9 @@ export function MultiplayerGamePage() {
 
   const [pairInfo,setPairInfo]=useState(null)
   const [jokerInfo,setJokerInfo]=useState(null)
+  const [turnSecsLeft,setTurnSecsLeft]=useState(TURN_SECONDS)
+  const { playCardClick, playCardPick, playPair, playWin, playLose, playJoker, playTurnStart, playTick } = useSound()
+  const { recordGamePlayed } = useDailyBonus(user?.id)
 
   const room=liveRoom||initRoom
 
@@ -735,8 +750,12 @@ export function MultiplayerGamePage() {
         rewardWin(room.id)
         const pot = betAmount * localGameState.players.length
         setCoinResult({ won: true, amount: pot })
+        playWin()
+        recordGamePlayed(true, true)
       } else if(iLost){
         setCoinResult({ won: false, amount: betAmount })
+        playLose()
+        recordGamePlayed(false, true)
       }
       refreshProfile()
     }
@@ -746,12 +765,76 @@ export function MultiplayerGamePage() {
       betSettled.current=true
       const loser=localGameState.players[localGameState.loserIndex]
       const isWinner=loser?.id!==user.id
-      if(isWinner) rewardWin(room.id)
+      if(isWinner){ rewardWin(room.id); playWin(); recordGamePlayed(true, true) }
+      else { playLose(); recordGamePlayed(false, true) }
     }
   },[localGameState?.status, user])
 
   useEffect(()=>{ if(!pairInfo) return; const t=setTimeout(()=>setPairInfo(null),1000); return ()=>clearTimeout(t) },[pairInfo])
   useEffect(()=>{ if(!jokerInfo) return; const t=setTimeout(()=>setJokerInfo(null),1200); return ()=>clearTimeout(t) },[jokerInfo])
+
+  // ── TURN TIMER: countdown + auto-skip when time runs out
+  useEffect(()=>{
+    if(localGameState?.status!=='playing') return
+    const turnStart = localGameState?.turnStartedAt ? new Date(localGameState.turnStartedAt).getTime() : Date.now()
+    const tick = setInterval(()=>{
+      const elapsed = Math.floor((Date.now() - turnStart) / 1000)
+      const left = Math.max(0, TURN_SECONDS - elapsed)
+      setTurnSecsLeft(left)
+      // Tick sound saat urgent
+      if(left <= 5 && left > 0 && isMyTurn && elapsed % 1 < 0.6) playTick()
+
+      // Auto-skip: hanya player yang gilirannya yang trigger skip
+      if(left === 0 && isMyTurn && localGameState){
+        clearInterval(tick)
+        // Paksa ambil kartu random dari neighbor, atau skip giliran
+        const state = localGameState
+        const neighbor = leftNeighbor(state.players, state.current)
+        if(neighbor != null && state.players[neighbor].hand.length > 0){
+          // Pilih kartu random
+          const randomIdx = Math.floor(Math.random() * state.players[neighbor].hand.length)
+          const newPlayers = state.players.map(p=>({...p, hand:[...p.hand]}))
+          const src = newPlayers[neighbor], tgt = newPlayers[state.current]
+          const [card] = src.hand.splice(randomIdx, 1)
+          tgt.hand.push(card)
+          tgt.hand = removePairs(tgt.hand)
+          for(let i=0;i<newPlayers.length;i++){if(newPlayers[i].hand.length===0)newPlayers[i].out=true}
+          const stillActive = newPlayers.filter(p=>!p.out&&p.hand.length>0)
+          const newState = stillActive.length===1
+            ?{...state,players:newPlayers,status:'finished',loserIndex:newPlayers.findIndex(p=>p.id===stillActive[0].id),turnStartedAt:new Date().toISOString()}
+            :{...state,players:newPlayers,current:nextActiveLeft(newPlayers,state.current),turnStartedAt:new Date().toISOString()}
+          setLocalGameState(newState)
+          setSelectedIndex(null)
+          updateGameState({roomId:room.id, state:newState})
+        } else {
+          // Tidak ada neighbor, langsung skip giliran
+          const newState = {...state, current:nextActiveLeft(state.players,state.current), turnStartedAt:new Date().toISOString()}
+          setLocalGameState(newState)
+          updateGameState({roomId:room.id, state:newState})
+        }
+      }
+    }, 500)
+    return ()=>clearInterval(tick)
+  },[localGameState?.current, localGameState?.status, localGameState?.turnStartedAt])
+
+  // ── TURN START: sound + browser notification saat giliran jadi milik kita
+  useEffect(()=>{
+    if(!isMyTurn || localGameState?.status!=='playing') return
+    // Sound
+    playTurnStart()
+    // Browser notification kalau tab tidak aktif
+    if(document.hidden){
+      if(Notification.permission==='granted'){
+        new Notification('Kartu Batak', {
+          body: 'Giliranmu! Ambil kartu sekarang.',
+          icon: '/favicon.ico',
+          tag: 'turn-notification',
+        })
+      } else if(Notification.permission!=='denied'){
+        Notification.requestPermission()
+      }
+    }
+  },[localGameState?.current, isMyTurn])
 
   if(!room||!user){ navigate('/lobby'); return null }
 
@@ -766,7 +849,7 @@ export function MultiplayerGamePage() {
   const displayHand=handOrder?handOrder.map(id=>myHand.find(c=>c.id===id)).filter(Boolean):myHand
 
   const handleStart=async()=>{
-    const initialState=buildInitialState(players)
+    const initialState={...buildInitialState(players), turnStartedAt:new Date().toISOString()}
     await startGame({roomId:room.id,initialState})
   }
   const handleLeave=async()=>{
@@ -790,12 +873,17 @@ export function MultiplayerGamePage() {
     const gotJoker=card.rank==='JOKER'
     const gotPair=!gotJoker&&beforeHand.some(c=>c.rank===card.rank)
 
+    // Sound
+    if(gotJoker) playJoker()
+    else if(gotPair) { playCardPick(); setTimeout(()=>playPair(),200) }
+    else playCardPick()
+
     tgt.hand=removePairs(tgt.hand)
     for(let i=0;i<newPlayers.length;i++){if(newPlayers[i].hand.length===0)newPlayers[i].out=true}
     const stillActive=newPlayers.filter(p=>!p.out&&p.hand.length>0)
     const newState=stillActive.length===1
-      ?{...state,players:newPlayers,status:'finished',loserIndex:newPlayers.findIndex(p=>p.id===stillActive[0].id)}
-      :{...state,players:newPlayers,current:nextActiveLeft(newPlayers,state.current)}
+      ?{...state,players:newPlayers,status:'finished',loserIndex:newPlayers.findIndex(p=>p.id===stillActive[0].id),turnStartedAt:new Date().toISOString()}
+      :{...state,players:newPlayers,current:nextActiveLeft(newPlayers,state.current),turnStartedAt:new Date().toISOString()}
 
     setLocalGameState(newState)
     setSelectedIndex(null)
@@ -930,6 +1018,49 @@ export function MultiplayerGamePage() {
 
             <div style={{height:1,background:'linear-gradient(90deg,transparent,rgba(241,196,15,0.3),rgba(241,196,15,0.08),transparent)'}}/>
 
+            {/* ── TURN TIMER BAR ── */}
+            {localGameState?.status==='playing' && (()=>{
+              const pct = (turnSecsLeft / TURN_SECONDS) * 100
+              const isUrgent = turnSecsLeft <= 10
+              const barColor = isUrgent
+                ? `rgba(231,76,60,${0.7 + (10-turnSecsLeft)*0.03})`
+                : turnSecsLeft <= 20
+                  ? 'rgba(241,196,15,0.8)'
+                  : 'rgba(39,174,96,0.8)'
+              return (
+                <div style={{display:'flex',alignItems:'center',gap:10}}>
+                  {/* Bar container */}
+                  <div style={{flex:1,height:4,borderRadius:9999,background:'rgba(255,255,255,0.06)',overflow:'hidden',position:'relative'}}>
+                    <div style={{
+                      position:'absolute',left:0,top:0,height:'100%',borderRadius:9999,
+                      width:`${pct}%`,
+                      background:barColor,
+                      boxShadow:isUrgent?`0 0 8px ${barColor}`:'none',
+                      transition:'width 0.5s linear, background 0.3s ease',
+                      animation:isUrgent?'mp-timer-pulse 0.6s ease-in-out infinite':'none',
+                    }}/>
+                  </div>
+                  {/* Seconds label */}
+                  <div style={{
+                    minWidth:36,textAlign:'center',borderRadius:8,padding:'2px 6px',
+                    background:isUrgent?'rgba(231,76,60,0.15)':'rgba(0,0,0,0.3)',
+                    border:`1px solid ${isUrgent?'rgba(231,76,60,0.4)':'rgba(241,196,15,0.15)'}`,
+                    transition:'all 0.3s',
+                  }}>
+                    <span style={{
+                      fontSize:11,fontWeight:800,fontFamily:'Cinzel,serif',
+                      color:isUrgent?'#e74c3c':'rgba(241,196,15,0.7)',
+                      animation:isUrgent?'mp-timer-pulse 0.6s ease-in-out infinite':'none',
+                    }}>{turnSecsLeft}s</span>
+                  </div>
+                  {/* Who's turn label */}
+                  <span style={{fontSize:9,color:'rgba(255,255,255,0.25)',fontFamily:'Cinzel,serif',whiteSpace:'nowrap'}}>
+                    {isMyTurn ? 'Giliranmu' : `${currentPlayer?.name?.split(' ')[0]}`}
+                  </span>
+                </div>
+              )
+            })()}
+
             {/* Opponents */}
             <div style={{display:'flex',gap:8,flexWrap:'wrap',justifyContent:'center'}}>
               {localGameState.players.filter(p=>p.id!==user.id).map(p=>{
@@ -1028,7 +1159,7 @@ export function MultiplayerGamePage() {
                   <motion.div key={`n-${idx}`} style={{marginLeft:idx===0?0:isMobile?-12:-10,zIndex:selectedIndex===idx?5:1}}
                     animate={{y:selectedIndex===idx?-8:0}}>
                     <CardBack size={isMobile?'sm':'md'} selected={selectedIndex===idx} canClick={isMyTurn}
-                      onClick={()=>isMyTurn&&setSelectedIndex(idx)}/>
+                      onClick={()=>{ if(isMyTurn){ playCardClick(); setSelectedIndex(idx) } }}/>
                   </motion.div>
                 ))}
                 {!neighborPlayer&&(
