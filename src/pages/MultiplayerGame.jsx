@@ -1202,76 +1202,393 @@ export function MultiplayerGamePage() {
                         <div>
                           <p style={{fontSize:9,textTransform:'uppercase',letterSpacing:'0.2em',
                             color:coinResult.won?'rgba(241,196,15,0.5)':'rgba(255,255,255,0.3)',margin:0,marginBottom:2,fontFamily:'Cinzel,serif'}}>
-                            {coinResult.won ? 'Koin Diterima' : 'Koin Hilang'}
-                          </p>
-                          <p style={{fontFamily:'Cinzel Decorative,Georgia,serif',fontSize:20,fontWeight:700,margin:0,
-                            color:coinResult.won?'#F1C40F':'#e74c3c',
-                            textShadow:coinResult.won?'0 0 16px rgba(241,196,15,0.5)':'none'}}>
-                            {coinResult.won ? `+${coinResult.amount.toLocaleString()}` : `-${coinResult.amount.toLocaleString()}`} koin
-                          </p>
-                        </div>
-                      </div>
-                      {coinResult.won && betAmount > 0 && (
-                        <p style={{fontSize:9,color:'rgba(241,196,15,0.35)',margin:'6px 0 0',fontFamily:'Cinzel,serif',letterSpacing:'0.05em'}}>
-                          Taruhan {betAmount.toLocaleString()} × {localGameState.players.length} pemain = pot {pot.toLocaleString()} koin
-                        </p>
-                      )}
-                    </motion.div>
-                  )}
+import { useEffect, useRef, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
+import { useAuth } from '../hooks/useAuth.jsx'
+import { useMultiplayer } from '../hooks/useMultiplayer.js'
+import { useCoins } from '../hooks/useCoins.js'
+import { supabase } from '../lib/supabase.js'
 
-                  {/* Joker card */}
-                  <div style={{display:'flex',justifyContent:'center',marginBottom:16}}>
-                    <motion.div animate={{rotate:[0,-6,6,0],y:[0,-10,0]}} transition={{duration:2.5,repeat:Infinity}}
-                      style={{width:72,height:100,borderRadius:12,background:'linear-gradient(145deg,#0d0020,#2a0050)',border:'2px solid #e74c3c',
-                        boxShadow:'0 0 60px rgba(192,57,43,0.9),0 0 120px rgba(192,57,43,0.3)',
-                        display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:5}}>
-                      <span style={{fontSize:30,filter:'drop-shadow(0 0 12px rgba(255,80,80,0.9))'}}>🃏</span>
-                      <span style={{fontSize:8,color:'#F1C40F',letterSpacing:'0.3em',fontFamily:'Cinzel,serif'}}>JOKER</span>
-                    </motion.div>
-                  </div>
+const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K']
+const SUITS = ['♠','♥','♦','♣']
+const RED_SUITS = ['♥','♦']
 
-                  {/* Players grid */}
-                  <div style={{display:'flex',justifyContent:'center',gap:6,marginBottom:22,flexWrap:'wrap'}}>
-                    {localGameState.players.map(p=>(
-                      <motion.div key={p.id} initial={{opacity:0,scale:0.8}} animate={{opacity:1,scale:1}}
-                        style={{borderRadius:12,padding:isMobile?'7px 10px':'8px 13px',minWidth:60,
-                          background:p.id===loser?.id?'rgba(192,57,43,0.15)':'rgba(241,196,15,0.06)',
-                          border:p.id===loser?.id?'1px solid rgba(192,57,43,0.42)':'1px solid rgba(241,196,15,0.12)'}}>
-                        <p style={{fontSize:10,color:p.id===loser?.id?'#e74c3c':'rgba(241,196,15,0.65)',fontWeight:700,
-                          fontFamily:'Cinzel,serif',margin:0,letterSpacing:'0.03em'}}>{p.name}</p>
-                        <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:4,marginTop:3}}>
-                          {p.id===loser?.id
-                            ? <><IcoX size={9}/><span style={{fontSize:9,color:'rgba(255,255,255,0.3)'}}>Kalah</span></>
-                            : <><IcoCheck size={9} color="rgba(39,174,96,0.6)"/><span style={{fontSize:9,color:'rgba(255,255,255,0.3)'}}>Selamat</span></>
-                          }
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
+function buildDeck() {
+  const deck = []; let id = 0
+  for (const rank of RANKS) for (const suit of SUITS) deck.push({ id: `${id++}`, rank, suit })
+  deck.push({ id: 'JOKER', rank: 'JOKER', suit: '🃏' })
+  return deck
+}
+function shuffle(a) { const arr=[...a]; for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]]} return arr }
+function removePairs(hand) {
+  const byRank = hand.reduce((acc,c) => { if(c.rank==='JOKER') return acc; acc[c.rank]=acc[c.rank]||[]; acc[c.rank].push(c); return acc },{})
+  const remaining=[]; Object.values(byRank).forEach(g => { if(g.length%2===1) remaining.push(g[0]) })
+  return [...remaining,...hand.filter(c=>c.rank==='JOKER')]
+}
+function nextActiveLeft(players, from) {
+  const t=players.length; let idx=from
+  for(let i=0;i<t;i++){idx=(idx-1+t)%t; const p=players[idx]; if(!p.out&&p.hand.length>0) return idx}
+  return from
+}
+function leftNeighbor(players, from) {
+  const t=players.length; let idx=from
+  for(let i=0;i<t-1;i++){idx=(idx+1)%t; const p=players[idx]; if(!p.out&&p.hand.length>0) return idx}
+  return null
+}
+function buildInitialState(playerList) {
+  const deck=shuffle(buildDeck())
+  const players=playerList.map((p,i)=>({ id:p.user_id, name:p.username, hand:[], out:false, seat:i }))
+  const copy=[...deck]; let idx=0
+  while(copy.length>0){ players[idx].hand.push(copy.pop()); idx=(idx+1)%players.length }
+  const withPairs=players.map(p=>{ const cleaned=removePairs(p.hand); return {...p,hand:cleaned,out:cleaned.length===0} })
+  return { players:withPairs, current:0, status:'playing', loserIndex:null }
+}
 
-                  <div style={{display:'flex',gap:10,justifyContent:'center',flexWrap:'wrap'}}>
-                    <motion.button type="button" onClick={handleLeave}
-                      whileHover={{scale:1.06,boxShadow:'0 0 36px rgba(192,57,43,0.7)'}} whileTap={{scale:0.95}}
-                      style={{borderRadius:12,padding:isMobile?'10px 20px':'12px 26px',fontSize:13,fontWeight:700,border:'none',cursor:'pointer',
-                        fontFamily:'Cinzel,serif',letterSpacing:'0.08em',
-                        background:'linear-gradient(135deg,#7b1515,#a93226,#e74c3c)',color:'#fff',
-                        boxShadow:'0 0 32px rgba(192,57,43,0.55),inset 0 1px 0 rgba(255,255,255,0.1)'}}>
-                      <span style={{display:'flex',alignItems:'center',gap:8}}><IcoReplay size={14}/> Main Lagi</span>
-                    </motion.button>
-                    <motion.button type="button" onClick={handleHome}
-                      whileHover={{scale:1.06,boxShadow:'0 0 24px rgba(241,196,15,0.3)'}} whileTap={{scale:0.95}}
-                      style={{borderRadius:12,padding:isMobile?'10px 20px':'12px 26px',fontSize:13,fontWeight:700,cursor:'pointer',
-                        fontFamily:'Cinzel,serif',letterSpacing:'0.08em',
-                        border:'1px solid rgba(241,196,15,0.35)',background:'rgba(241,196,15,0.08)',color:'rgba(241,196,15,0.85)'}}>
-                      <span style={{display:'flex',alignItems:'center',gap:8}}><IcoHome size={14}/> Beranda</span>
-                    </motion.button>
-                  </div>
-                </motion.div>
-              </motion.div>
-            )
-          })()}
-        </AnimatePresence>
-      </section>
-    </>
+/* ── STYLES ── */
+const mpStyles = `
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@400;700&display=swap');
+
+  @keyframes mp-shimmer {
+    0% { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
+  @keyframes mp-orbFloat {
+    0%, 100% { transform: translateY(0px); opacity: 0.35; }
+    50% { transform: translateY(-15px); opacity: 0.55; }
+  }
+  @keyframes mp-pulse-border {
+    0%, 100% { border-color: rgba(241,196,15,0.4); box-shadow: 0 0 20px rgba(241,196,15,0.2); }
+    50% { border-color: rgba(241,196,15,0.85); box-shadow: 0 0 40px rgba(241,196,15,0.45); }
+  }
+  @keyframes mp-jokerPulse {
+    0%, 100% { box-shadow: 0 0 20px rgba(192,57,43,0.6), 0 4px 16px rgba(0,0,0,0.7); }
+    50% { box-shadow: 0 0 55px rgba(192,57,43,1), 0 0 90px rgba(192,57,43,0.25), 0 4px 16px rgba(0,0,0,0.7); }
+  }
+  @keyframes mp-cardGlow {
+    0%, 100% { box-shadow: 0 0 18px rgba(241,196,15,0.45), 0 4px 14px rgba(0,0,0,0.7); }
+    50% { box-shadow: 0 0 40px rgba(241,196,15,0.85), 0 0 70px rgba(241,196,15,0.2), 0 4px 14px rgba(0,0,0,0.7); }
+  }
+  @keyframes mp-borderPulse {
+    0%, 100% { border-color: rgba(241,196,15,0.35); }
+    50% { border-color: rgba(241,196,15,0.8); box-shadow: 0 0 14px rgba(241,196,15,0.25); }
+  }
+  @keyframes mp-coin-pop {
+    0%   { transform: scale(0) rotate(-15deg); opacity: 0; }
+    60%  { transform: scale(1.2) rotate(5deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+  .mp-card-hover:hover {
+    transform: translateY(-18px) scale(1.14) !important;
+    z-index: 10 !important;
+    filter: brightness(1.05) !important;
+  }
+  .mp-neighbor-hover:hover {
+    transform: translateY(-20px) scale(1.18) !important;
+    z-index: 10 !important;
+    filter: brightness(1.08) !important;
+  }
+  .mp-scrollbar::-webkit-scrollbar { width: 4px; }
+  .mp-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+  .mp-scrollbar::-webkit-scrollbar-thumb { background: rgba(241,196,15,0.2); border-radius: 2px; }
+  @keyframes mp-btn-shimmer {
+    0%   { background-position: -200% center; }
+    100% { background-position:  200% center; }
+  }
+  @keyframes mp-timer-drain {
+    from { width: 100%; }
+    to   { width: 0%; }
+  }
+  @keyframes mp-timer-pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.5; }
+  }
+`
+
+const TURN_SECONDS = 30
+
+/* ── PREMIUM SVG ICONS (zero emoji) ── */
+const IcoBolt = ({ size=12 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+  </svg>
+)
+const IcoHourglass = ({ size=12 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M5 3h14M5 21h14M8 8h8l-1 4H9L8 8z"/>
+  </svg>
+)
+const IcoShuffle = ({ size=14 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="16 3 21 3 21 8"/>
+    <line x1="4" y1="20" x2="21" y2="3"/>
+    <polyline points="21 16 21 21 16 21"/>
+    <line x1="15" y1="15" x2="21" y2="21"/>
+  </svg>
+)
+const IcoReplay = ({ size=14 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="1 4 1 10 7 10"/>
+    <path d="M3.51 15a9 9 0 102.13-9.36L1 10"/>
+  </svg>
+)
+const IcoHome = ({ size=14 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+    <polyline points="9 22 9 12 15 12 15 22"/>
+  </svg>
+)
+const IcoPickArrow = ({ size=12 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="12" y1="5" x2="12" y2="19"/>
+    <polyline points="19 12 12 19 5 12"/>
+  </svg>
+)
+const IcoCards = ({ size=14 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="3" width="13" height="18" rx="2"/>
+    <path d="M5 7h7M5 10.5h7M5 14h4"/>
+    <rect x="9" y="7" width="13" height="18" rx="2" strokeOpacity="0.35"/>
+  </svg>
+)
+const IcoCrown = ({ size=16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M2 17l4-10 4 6 2-8 2 8 4-6 4 10H2z"/>
+    <line x1="2" y1="20" x2="22" y2="20"/>
+  </svg>
+)
+const IcoPerson = ({ size=16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="7" r="4"/>
+    <path d="M4 21v-1a8 8 0 0116 0v1"/>
+  </svg>
+)
+const IcoCheckCircle = ({ size=10, color='rgba(39,174,96,0.75)' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10"/>
+    <path d="M9 12l2 2 4-4"/>
+  </svg>
+)
+const IcoSkull = ({ size=32, color='#e74c3c' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 2a7 7 0 017 7c0 3.5-2 5.5-2 7H7c0-1.5-2-3.5-2-7a7 7 0 017-7z"/>
+    <path d="M9 17v2a1 1 0 001 1h4a1 1 0 001-1v-2"/>
+    <circle cx="9" cy="12" r="1.2" fill={color} stroke="none"/>
+    <circle cx="15" cy="12" r="1.2" fill={color} stroke="none"/>
+  </svg>
+)
+const IcoStar = ({ size=32, color='#F1C40F' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 2l2.4 4.9 5.4.8-3.9 3.8.9 5.4L12 14.4l-4.8 2.5.9-5.4L4.2 7.7l5.4-.8L12 2z"/>
+    <path d="M5 21h14"/>
+  </svg>
+)
+const IcoX = ({ size=9 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#e74c3c" strokeWidth="3" strokeLinecap="round">
+    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+  </svg>
+)
+const IcoCheck = ({ size=9, color='rgba(39,174,96,0.75)' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="3" strokeLinecap="round">
+    <path d="M9 12l2 2 4-4"/>
+  </svg>
+)
+const IcoShield = ({ size=20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="rgba(39,174,96,0.8)" strokeWidth="1.8" strokeLinecap="round">
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+    <path d="M9 12l2 2 4-4"/>
+  </svg>
+)
+const IcoRocket = ({ size=14 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 2c0 0 4 3 4 9H8c0-6 4-9 4-9z"/>
+    <path d="M8 11v5l-2 3h12l-2-3v-5"/>
+    <circle cx="12" cy="17" r="1" fill="currentColor"/>
+  </svg>
+)
+const IcoDoor = ({ size=14 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
+  </svg>
+)
+const IcoChat = ({ size=14 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+  </svg>
+)
+const IcoCopy = ({ size=12 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="9" y="9" width="13" height="13" rx="2"/>
+    <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+  </svg>
+)
+const IcoTrophy = ({ size=20, color='#F1C40F' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M6 9H4a2 2 0 01-2-2V5h4"/>
+    <path d="M18 9h2a2 2 0 002-2V5h-4"/>
+    <path d="M12 17c-2.8 0-5-2.2-5-5V5h10v7c0 2.8-2.2 5-5 5z"/>
+    <path d="M12 17v3M8 21h8"/>
+  </svg>
+)
+
+/* ── Coin SVG inline ── */
+const IcoCoinInline = ({ size=14 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <circle cx="12" cy="12" r="10" fill="url(#mpCoinGrad)" stroke="rgba(241,196,15,0.5)" strokeWidth="1"/>
+    <circle cx="12" cy="12" r="7" fill="none" stroke="rgba(241,196,15,0.2)" strokeWidth="0.8"/>
+    <text x="12" y="16" textAnchor="middle" fontSize="8" fontWeight="bold" fill="rgba(100,65,0,0.9)" fontFamily="serif">₿</text>
+    <defs>
+      <radialGradient id="mpCoinGrad" cx="35%" cy="30%" r="70%">
+        <stop offset="0%" stopColor="#FFE566"/>
+        <stop offset="50%" stopColor="#F1C40F"/>
+        <stop offset="100%" stopColor="#B8860B"/>
+      </radialGradient>
+    </defs>
+  </svg>
+)
+
+/* ── Multiplayer opponent avatars ── */
+const PlayerAvatars = [
+  ({ size=20, color='currentColor' }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 2C6.5 2 3 6 3 10v4c0 2 1 4 3 5l2 1h8l2-1c2-1 3-3 3-5v-4c0-4-3.5-8-9-8z"/>
+      <path d="M9 13c0 0 1 1.5 3 1.5s3-1.5 3-1.5"/>
+      <line x1="8" y1="10" x2="10" y2="10" strokeWidth="2"/>
+      <line x1="14" y1="10" x2="16" y2="10" strokeWidth="2"/>
+    </svg>
+  ),
+  ({ size=20, color='currentColor' }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="8" cy="10" r="3"/><circle cx="16" cy="10" r="3"/>
+      <line x1="11" y1="10" x2="13" y2="10"/><line x1="5" y1="10" x2="3" y2="8"/>
+      <line x1="19" y1="10" x2="21" y2="8"/>
+      <path d="M6 16c0 0 2 2 6 2s6-2 6-2"/>
+    </svg>
+  ),
+  ({ size=20, color='currentColor' }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 2L4 6v6c0 5 4 9 8 10 4-1 8-5 8-10V6l-8-4z"/>
+      <path d="M12 8v8M8 12h8" strokeOpacity="0.6"/>
+    </svg>
+  ),
+  ({ size=20, color='currentColor' }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/>
+      <circle cx="12" cy="12" r="3"/>
+      <circle cx="12" cy="12" r="1" fill={color} stroke="none"/>
+    </svg>
+  ),
+]
+
+function CardFace({ card, size='md', glow=false }) {
+  const isJoker=card.rank==='JOKER', isRed=RED_SUITS.includes(card.suit)
+  const s={ sm:{w:36,h:52,r:10,st:10}, md:{w:52,h:74,r:14,st:14}, lg:{w:64,h:90,r:17,st:16} }[size]
+  return (
+    <div style={{
+      width:s.w, height:s.h, borderRadius:9, flexShrink:0,
+      background:isJoker?'linear-gradient(145deg,#0d0020,#2a0050)':'linear-gradient(160deg,#fdfaf0,#f7f0de,#ede0c0)',
+      border:isJoker?'1.5px solid rgba(220,50,50,0.85)':'1px solid rgba(190,160,100,0.55)',
+      boxShadow:glow||isJoker
+        ?'0 0 24px rgba(200,50,43,0.9), 0 0 48px rgba(200,50,43,0.25), 0 4px 14px rgba(0,0,0,0.7)'
+        :'0 4px 14px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.25)',
+      display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'space-between',
+      padding:'4px 3px', position:'relative', overflow:'hidden',
+      animation: isJoker ? 'mp-jokerPulse 2s ease-in-out infinite' : 'none',
+    }}>
+      {!isJoker && (
+        <div style={{position:'absolute',inset:0,borderRadius:8,pointerEvents:'none',
+          background:'repeating-linear-gradient(45deg,transparent,transparent 4px,rgba(0,0,0,0.012) 4px,rgba(0,0,0,0.012) 5px)'}}/>
+      )}
+      {isJoker?(
+        <>
+          <span style={{fontSize:s.st,alignSelf:'flex-start',filter:'drop-shadow(0 0 6px rgba(255,100,100,0.8))'}}>🃏</span>
+          <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:1}}>
+            <span style={{fontSize:s.r+5,filter:'drop-shadow(0 0 10px rgba(255,80,80,1))'}}>🃏</span>
+            <span style={{fontSize:6,color:'rgba(255,180,180,0.75)',letterSpacing:'0.2em',fontFamily:'Cinzel,serif'}}>JOKER</span>
+          </div>
+          <span style={{fontSize:s.st,alignSelf:'flex-end',transform:'rotate(180deg)',filter:'drop-shadow(0 0 6px rgba(255,100,100,0.8))'}}>🃏</span>
+          <div style={{position:'absolute',inset:0,background:'radial-gradient(circle at 50% 50%,rgba(200,50,50,0.22),transparent 70%)',borderRadius:8,pointerEvents:'none'}}/>
+        </>
+      ):(
+        <>
+          <div style={{alignSelf:'flex-start'}}>
+            <div style={{fontSize:s.r,fontWeight:800,color:isRed?'#c0392b':'#111827',lineHeight:1,fontFamily:'Cinzel,serif'}}>{card.rank}</div>
+            <div style={{fontSize:s.st-1,color:isRed?'#c0392b':'#111827',lineHeight:1}}>{card.suit}</div>
+          </div>
+          <div style={{fontSize:s.st+5,color:isRed?'#c0392b':'#111827',lineHeight:1,filter:'drop-shadow(0 1px 2px rgba(0,0,0,0.15))'}}>{card.suit}</div>
+          <div style={{alignSelf:'flex-end',transform:'rotate(180deg)'}}>
+            <div style={{fontSize:s.r,fontWeight:800,color:isRed?'#c0392b':'#111827',lineHeight:1,fontFamily:'Cinzel,serif'}}>{card.rank}</div>
+            <div style={{fontSize:s.st-1,color:isRed?'#c0392b':'#111827',lineHeight:1}}>{card.suit}</div>
+          </div>
+        </>
+      )}
+    </div>
   )
 }
+
+function CardBack({ size='md', selected=false, canClick=false, onClick }) {
+  const s={ sm:{w:34,h:50}, md:{w:48,h:68}, lg:{w:60,h:84} }[size]
+  return (
+    <motion.div onClick={canClick?onClick:undefined}
+      className={canClick?'mp-neighbor-hover':''}
+      whileTap={canClick?{scale:0.93}:{}}
+      style={{
+        width:s.w, height:s.h, borderRadius:9, flexShrink:0, cursor:canClick?'pointer':'default',
+        background:selected?'linear-gradient(145deg,#2a0a50,#4a1a80)':'linear-gradient(145deg,#140830,#26105a,#1c0c40)',
+        border:selected?'2px solid #F1C40F':'1px solid rgba(120,60,200,0.4)',
+        boxShadow:selected
+          ?'0 0 32px rgba(241,196,15,1),0 0 64px rgba(241,196,15,0.4),0 8px 24px rgba(0,0,0,0.8)'
+          :canClick
+          ?'0 0 14px rgba(200,60,60,0.3), 0 4px 14px rgba(0,0,0,0.6)'
+          :'0 4px 14px rgba(0,0,0,0.6)',
+        display:'flex', alignItems:'center', justifyContent:'center',
+        position:'relative', overflow:'hidden',
+        transition:'box-shadow 0.2s, transform 0.18s cubic-bezier(0.34,1.56,0.64,1)',
+        animation: canClick && !selected ? 'mp-borderPulse 2s ease-in-out infinite' : 'none',
+      }}>
+      <div style={{position:'absolute',inset:5,borderRadius:5,border:'1px solid rgba(241,196,15,0.3)'}}/>
+      <div style={{position:'absolute',inset:8,borderRadius:3,
+        background:'repeating-linear-gradient(45deg,rgba(241,196,15,0.05) 0px,rgba(241,196,15,0.05) 2px,transparent 2px,transparent 7px)'}}/>
+      <div style={{width:16,height:16,border:'1px solid rgba(241,196,15,0.4)',transform:'rotate(45deg)',
+        position:'relative',zIndex:1,background:'rgba(241,196,15,0.05)',boxShadow:'0 0 6px rgba(241,196,15,0.12)'}}>
+        <div style={{position:'absolute',inset:3,border:'1px solid rgba(241,196,15,0.25)'}}/>
+      </div>
+      {canClick && (
+        <motion.div style={{
+          position:'absolute',inset:0,borderRadius:8,pointerEvents:'none',
+          background:'linear-gradient(105deg,transparent 30%,rgba(255,255,255,0.05) 50%,transparent 70%)',
+          backgroundSize:'200% 100%',
+        }}
+          animate={{backgroundPosition:['-200% 0','200% 0']}}
+          transition={{duration:2,repeat:Infinity,ease:'linear'}}/>
+      )}
+      {selected&&<div style={{position:'absolute',inset:0,background:'rgba(241,196,15,0.13)',borderRadius:8}}/>}
+    </motion.div>
+  )
+}
+
+function PairAnimation({ pairRank }) {
+  return (
+    <motion.div
+      style={{position:'absolute',inset:0,zIndex:20,display:'flex',alignItems:'center',justifyContent:'center',pointerEvents:'none'}}
+      initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}>
+      <div style={{position:'absolute',inset:0,background:'radial-gradient(ellipse at center,rgba(241,196,15,0.1),transparent 70%)',borderRadius:20}}/>
+      {[...Array(6)].map((_,i)=>(
+        <motion.div key={i} style={{position:'absolute',left:`${30+i*7}%`,top:'45%',width:4,height:4,borderRadius:'50%',background:'#F1C40F',boxShadow:'0 0 8px rgba(241,196,15,0.9)'}}
+          animate={{y:[0,-90],opacity:[1,0],scale:[1,0]}} transition={{duration:0.9,delay:i*0.08}}/>
+      ))}
+      <motion.div initial={{scale:0.5,y:20}} animate={{scale:1,y:0}} exit={{scale:0.5,y:20}}
+        style={{display:'flex',flexDirection:'column',alignItems:'center',gap:16}}>
+        <div style={{display:'flex',gap:10}}>
+          {[0,1].map(i=>(
+            <motion.div key={i}
+              animate={{x:i===0?[-8,8,0]:[8,-8,0],y:[0,-14,0],rotate:i===0?[-5,5,0]:[5,-5,0]}}
+              transition={{duration:0.6}}
+              style={{width:58,height:80,borderRadius:10,background:'linear-gradient(160deg,#fffef5,#fff0b0)',border:'2.5px solid #F1C40F',
+                boxShadow:'0 0 36px rgba(241,196,15,1),0 0 72px rgba(241,196,15,0.4)',
+                display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'Cinzel,serif',fontSize:26,fontWeight:900,color:'#c0392b'}}>
+              {pairRank}
+            </motion.div>
+          ))}
+        </div>
+        <motion.div initial={{y:12,opacity:0}} anima
